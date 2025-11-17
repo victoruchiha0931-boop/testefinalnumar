@@ -5,28 +5,948 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Produção (Online)</title>
     
-    <!-- SDKs do Firebase -->
+    <!-- O CSS foi movido para o <head> -->
+    <style>
+        /* --- MELHORIA: Modo Noturno (CSS Variables) --- */
+        :root {
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --text-color-light: #555;
+            --card-bg: white;
+            --border-color: #ddd;
+            --header-bg: #2c3e50;
+            --table-header-bg: #f9f9f9;
+            --table-row-bg: #fdfdfd;
+            --table-row-hover: #f5faff;
+            --input-bg: #fdfdfd;
+            --input-border: #ccc;
+            --button-primary-bg: #3498db;
+            --button-primary-hover: #2980b9;
+            --button-success-bg: #27ae60;
+            --button-success-hover: #219150;
+            --button-danger-bg: #e74c3c;
+            --button-danger-hover: #c0392b;
+            --button-warning-bg: #f39c12;
+            --button-warning-hover: #e67e22;
+            /* ATUALIZAÇÃO: Cores do Relatório */
+            --relatorio-sobra-bg: #f0fef4;
+            --relatorio-falta-bg: #fff0f0;
+            --relatorio-sobra-text: #219150;
+            --relatorio-falta-text: #c0392b;
+        }
+        body.dark-mode {
+            --bg-color: #1a202c;
+            --text-color: #e2e8f0;
+            --text-color-light: #a0aec0;
+            --card-bg: #2d3748;
+            --border-color: #4a5568;
+            --header-bg: #1e293b;
+            --table-header-bg: #2d3748;
+            --table-row-bg: #262f3e;
+            --table-row-hover: #3c4a60;
+            --input-bg: #2d3748;
+            --input-border: #4a5568;
+            /* ATUALIZAÇÃO: Cores do Relatório (Modo Noturno) */
+            --relatorio-sobra-bg: #2d4a3c;
+            --relatorio-falta-bg: #4a2d30;
+            --relatorio-sobra-text: #38a169;
+            --relatorio-falta-text: #e53e3e;
+        }
+        /* --- FIM Modo Noturno --- */
+
+        /* Estilo geral */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color); /* Editado */
+            color: var(--text-color); /* Editado */
+            transition: background-color 0.2s, color 0.2s;
+        }
+        header {
+            background-color: var(--header-bg); /* Editado */
+            color: white;
+            padding: 1rem 1.5rem; /* Reduzido padding */
+            display: flex; /* Flexbox */
+            justify-content: space-between; /* Alinha itens */
+            align-items: center; /* Centraliza verticalmente */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        header h1 { 
+            margin: 0; 
+            font-size: 1.25rem; /* Reduzido tamanho */
+            text-align: left;
+        }
+        /* NOVO: Header Info (Usuário e Logout) */
+        .header-info {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        #user-name-display {
+            margin-right: 15px;
+            font-weight: 500;
+        }
+        #logout-button {
+            background-color: var(--button-danger-bg); /* Editado */
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        #logout-button:hover {
+            background-color: var(--button-danger-hover); /* Editado */
+        }
+
+        main {
+            padding: 1rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        /* NOVO: Telas de Login/Registo */
+        .auth-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: var(--bg-color); /* Editado */
+        }
+        .auth-form {
+            background: var(--card-bg); /* Editado */
+            padding: 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        .auth-form h2 {
+            text-align: center;
+            margin-top: 0;
+            color: var(--text-color); /* Editado */
+        }
+        .auth-form .form-group { margin-bottom: 1.25rem; }
+        .auth-form label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .auth-form input, .auth-form select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--input-border); /* Editado */
+            border-radius: 6px;
+            box-sizing: border-box; /* Garante padding correto */
+            background-color: var(--input-bg); /* Editado */
+            color: var(--text-color); /* Editado */
+        }
+        .auth-form button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--button-primary-bg); /* Editado */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .auth-form .auth-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.9em;
+            color: var(--button-primary-bg); /* Editado */
+            cursor: pointer;
+        }
+        .auth-form .auth-link:hover {
+            text-decoration: underline;
+        }
+        .auth-error {
+            color: var(--button-danger-bg); /* Editado */
+            text-align: center;
+            margin-top: 1rem;
+            display: none; /* Oculto por padrão */
+        }
+        
+        /* NOVO: Controle de Visibilidade */
+        #app-container, #register-container {
+            display: none; /* App e Registo ocultos por padrão */
+        }
+        #login-container {
+             display: flex; /* Login visível por padrão */
+        }
+
+        .tab-hidden {
+            display: none !important; /* Força esconder a aba */
+        }
+        /* Oculta botões de delete por padrão */
+        .action-button {
+            display: none;
+        }
+        /* Acesso de Proprietário: Mostra botões de delete */
+        body.role-Proprietário .action-button {
+            display: inline-block;
+            background-color: var(--button-danger-bg); /* Editado */
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        body.role-Proprietário .action-button:hover {
+            background-color: var(--button-danger-hover); /* Editado */
+        }
+        /* --- MELHORIA: Botão Editar --- */
+        body.role-Proprietário .edit-button {
+            display: inline-block;
+            background-color: var(--button-primary-bg); /* Azul */
+            margin-right: 5px;
+        }
+        body.role-Proprietário .edit-button:hover {
+            background-color: var(--button-primary-hover);
+        }
+        /* --- FIM Botão Editar --- */
+
+        /* Abas */
+        .tab-nav {
+            background-color: var(--card-bg); /* Editado */
+            overflow: hidden;
+            border-bottom: 2px solid var(--border-color); /* Editado */
+            display: flex;
+            justify-content: flex-start;
+            flex-wrap: wrap; /* Permite quebrar linha em telas pequenas */
+            border-radius: 8px 8px 0 0;
+        }
+        .tab-button {
+            background-color: inherit;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 20px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-color-light); /* Editado */
+            transition: 0.3s;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+        .tab-button:hover { background-color: var(--bg-color); color: var(--text-color); } /* Editado */
+        .tab-button.active {
+            color: var(--button-primary-bg); /* Editado */
+            font-weight: 600;
+            border-bottom: 3px solid var(--button-primary-bg); /* Editado */
+        }
+
+        /* Conteúdo das Abas */
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid var(--border-color); /* Editado */
+            background-color: var(--card-bg); /* Editado */
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tab-content.active { display: block; }
+        
+        h2, h3 {
+            color: var(--text-color); /* Editado */
+            border-bottom: 2px solid var(--bg-color); /* Editado */
+            padding-bottom: 10px;
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Formulários */
+        .form-container {
+            display: grid;
+            grid-template-columns: 1fr; 
+            gap: 15px;
+        }
+        @media (min-width: 600px) {
+            .form-container { grid-template-columns: 1fr 1fr; }
+        }
+        .form-container-prod {
+            grid-template-columns: 1fr;
+        }
+        @media (min-width: 700px) {
+            .form-container-prod {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
+        .form-container-3col {
+            grid-template-columns: 1fr;
+        }
+        @media (min-width: 700px) {
+            .form-container-3col {
+                grid-template-columns: 2fr 1fr 1fr;
+            }
+        }
+        .form-container-contagem {
+            grid-template-columns: 1fr;
+        }
+         @media (min-width: 700px) {
+            .form-container-contagem {
+                grid-template-columns: 1fr 1fr 1fr 1fr;
+            }
+        }
+        /* Container do form de Vendas */
+        .form-container-venda {
+             grid-template-columns: 1fr;
+        }
+        @media (min-width: 700px) {
+            .form-container-venda {
+                /* Data | Prato | Qtd */
+                grid-template-columns: 1fr 2fr 1fr;
+            }
+        }
+
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: var(--text-color-light); /* Editado */
+        }
+        .form-group input, .form-group select {
+            padding: 12px;
+            border: 1px solid var(--input-border); /* Editado */
+            border-radius: 6px;
+            font-size: 1em;
+            background-color: var(--input-bg); /* Editado */
+            color: var(--text-color); /* Editado */
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--button-primary-bg); /* Editado */
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        /* Botões */
+        .submit-button {
+            grid-column: 1 / -1; 
+            padding: 12px;
+            background-color: var(--button-success-bg); /* Editado */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .submit-button:hover { background-color: var(--button-success-hover); } /* Editado */
+        
+        .secondary-button {
+            padding: 10px 15px;
+            background-color: var(--button-primary-bg); /* Editado */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            margin-top: 5px;
+        }
+        .secondary-button:hover { background-color: var(--button-primary-hover); } /* Editado */
+
+        .copy-button {
+            background-color: #9b59b6; /* Roxo */
+            font-size: 0.8em;
+            padding: 8px 12px;
+            margin-left: 10px;
+        }
+        .copy-button:hover {
+            background-color: #8e44ad;
+        }
+        .copy-button.copied { /* Feedback de cópia */
+            background-color: var(--button-success-bg); /* Editado */
+        }
+
+        .export-button {
+            background-color: #16a085; /* Verde (diferente) */
+            font-size: 0.8em;
+            padding: 8px 12px;
+            margin-left: auto;
+        }
+        .export-button:hover {
+            background-color: #117a65;
+        }
+        
+        /* Botão Cancelar Edição */
+        .cancel-edit-button {
+            grid-column: 1 / -1;
+            background-color: var(--button-warning-bg);
+        }
+        .cancel-edit-button:hover {
+            background-color: var(--button-warning-hover);
+        }
+        
+        /* Nota de aviso (Vendas) */
+        .form-nota {
+            grid-column: 1 / -1;
+            font-size: 0.9em;
+            color: var(--text-color-light);
+            background-color: var(--bg-color);
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 0;
+        }
+
+        hr { border: 0; border-top: 1px solid var(--border-color); margin: 25px 0; } /* Editado */
+        ul { line-height: 1.6; }
+
+        /* Tabela */
+        .table-container {
+            width: 100%;
+            overflow-x: auto; /* Para rolagem em telas pequenas */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid var(--border-color); /* Editado */
+            padding: 10px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        th { background-color: var(--table-header-bg); font-weight: 600; } /* Editado */
+        tr:nth-child(even) { background-color: var(--table-row-bg); } /* Editado */
+        
+        /* ATUALIZAÇÃO: Estilos da Tabela Relatório */
+        tr.row-sobra {
+            background-color: var(--relatorio-sobra-bg);
+        }
+        tr.row-falta {
+            background-color: var(--relatorio-falta-bg);
+        }
+        .status-sobra {
+            color: var(--relatorio-sobra-text);
+            font-weight: bold;
+        }
+        .status-falta {
+            color: var(--relatorio-falta-text);
+            font-weight: bold;
+        }
+        .status-zerado {
+            font-weight: bold;
+        }
+        /* Fim Atualização Relatório */
+
+        tbody:empty::after {
+            content: "Carregando dados do Firebase...";
+            display: table-cell;
+            padding: 15px;
+            text-align: center;
+            color: var(--text-color-light); /* Editado */
+            font-style: italic;
+        }
+        
+        /* Tabela de Resumo */
+        .resumo-table td:last-child {
+            font-weight: bold;
+            font-size: 1.1em;
+            text-align: right;
+        }
+        .resumo-table tr:hover {
+            background-color: var(--table-row-hover); /* Editado */
+        }
+
+        /* Ingredientes na ficha técnica */
+        .ingrediente-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr auto; /* Coluna auto para o botão */
+            gap: 10px;
+            align-items: center;
+            padding: 10px;
+            border: 1px dashed var(--input-border); /* Editado */
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .ingrediente-item button {
+            background-color: var(--button-danger-bg); /* Editado */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px;
+            cursor: pointer;
+            width: 40px; /* Largura fixa para o botão X */
+            height: 40px;
+        }
+        .ingredientes-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.9em;
+        }
+        .ingredientes-list li {
+            border-bottom: 1px solid var(--border-color); /* Editado */
+            padding: 2px 0;
+        }
+        .ingredientes-list li:last-child {
+            border-bottom: none;
+        }
+        
+        /* Filtro de Relatório e Contagem */
+        .filtro-container {
+            background-color: var(--table-row-bg); /* Editado */
+            border: 1px solid var(--border-color); /* Editado */
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            align-items: flex-end;
+        }
+        @media (max-width: 600px) {
+            .filtro-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Contêiner para botões da tabela */
+        .table-header-buttons {
+            display: flex;
+            margin-left: auto; /* Joga para a direita */
+        }
+        
+        /* --- MELHORIA: Caixa de Notificação (Substitui alerts) --- */
+        #notification-box {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px;
+            border-radius: 8px;
+            background-color: var(--header-bg); /* Editado */
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            /* Começa fora da tela */
+            transform: translateX(calc(100% + 30px)); 
+            transition: transform 0.4s ease-in-out;
+            z-index: 1000;
+            max-width: 300px;
+            font-weight: 500;
+        }
+        #notification-box.show {
+             /* Move para a tela */
+            transform: translateX(0);
+        }
+        #notification-box.error {
+            background-color: var(--button-danger-bg); /* Editado */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HTML da Página -->
+    
+    <!-- NOVO: Tela de Login (Visível por padrão) -->
+    <div id="login-container" class="auth-container">
+        <form id="login-form" class="auth-form">
+            <h2>Controle de Produção Numar</h2>
+            <div class="form-group">
+                <label for="login-name">Nome (Login)</label>
+                <input type="text" id="login-name" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Senha</label>
+                <input type="password" id="login-password" required autocomplete="current-password">
+            </div>
+            <button type="submit">Entrar</button>
+            <p id="login-error" class="auth-error"></p>
+            <p id="show-register-link" class="auth-link">Não tem conta? Crie uma aqui.</p>
+        </form>
+    </div>
+    
+    <!-- NOVO: Tela de Registo (Oculta por padrão) -->
+    <div id="register-container" class="auth-container">
+        <form id="register-form" class="auth-form">
+            <h2>Criar Nova Conta</h2>
+            <div class="form-group">
+                <label for="register-nome-completo">Seu Nome Completo</label>
+                <input type="text" id="register-nome-completo" required class="format-capitalize">
+            </div>
+            <div class="form-group">
+                <label for="register-nome-login">Nome de Login (Ex: vitor)</label>
+                <input type="text" id="register-nome-login" required>
+            </div>
+            <div class="form-group">
+                <label for="register-password">Senha (mín. 6 caracteres)</label>
+                <input type="password" id="register-password" required>
+            </div>
+            <div class="form-group">
+                <label for="register-funcao">Sua Função</label>
+                <select id="register-funcao" required>
+                    <option value="">Selecione...</option>
+                    <option value="Produção">Produção</option>
+                    <option value="Compras">Compras</option>
+                </select>
+            </div>
+            <button type="submit">Registar</button>
+            <p id="register-error" class="auth-error"></p>
+            <p id="show-login-link" class="auth-link">Já tem conta? Entre aqui.</p>
+        </form>
+    </div>
+    
+    <!-- App (Oculto por padrão) -->
+    <div id="app-container">
+        <header>
+            <h1>Controle de Produção Numar</h1>
+            <div class="header-info">
+                <button id="dark-mode-toggle" title="Alternar modo noturno" style="background: none; border: none; color: white; cursor: pointer; font-size: 1.25rem; margin-right: 10px; line-height: 1;">&#9728;</button>
+                <span id="user-name-display"></span>
+                <button id="logout-button">Sair</button>
+            </div>
+        </header>
+
+        <nav class="tab-nav">
+            <button class="tab-button" onclick="showTab('itens', this)">Itens</button>
+            <button class="tab-button" onclick="showTab('producao', this)">Produção</button>
+            <button class="tab-button" onclick="showTab('contagem', this)">Contagem</button>
+            <button class="tab-button" onclick="showTab('vendas', this)">Vendas</button>
+            <button class="tab-button" onclick="showTab('relatorio', this)">Relatório</button>
+        </nav>
+
+        <main>
+            <!-- Aba Itens -->
+            <div id="itens" class="tab-content">
+                <h2>Cadastro de Itens e Categorias</h2>
+                <p>Cadastre aqui todos os seus itens. Isso garantirá a padronização em todo o sistema.</p>
+                <form id="form-itens" class="form-container">
+                    <input type="hidden" id="item-edit-id">
+                    <div class="form-group">
+                        <label for="item-nome">Nome do Item (Ex: Pescada 200g)</label>
+                        <input type="text" id="item-nome" placeholder="Nome único do item" required class="format-capitalize">
+                    </div>
+                    <div class="form-group">
+                        <label for="item-categoria">Categoria</label>
+                        <input type="text" id="item-categoria" list="lista-categorias" placeholder="Ex: Proteínas" required class="format-capitalize">
+                        <datalist id="lista-categorias">
+                            <option value="Proteínas"></option>
+                            <option value="Acompanhamentos"></option>
+                            <option value="Bebidas"></option>
+                            <option value="Descartáveis"></option>
+                            <option value="Hortifruti"></option>
+                        </datalist>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="submit-button">Salvar Novo Item</button>
+                    </div>
+                    <div class="form-group" id="cancel-edit-item-container" style="display: none;">
+                        <button type="button" id="cancel-edit-item-btn" class="secondary-button cancel-edit-button">Cancelar Edição</button>
+                    </div>
+                </form>
+                <hr>
+                <h3>
+                    Itens Cadastrados
+                    <button id="export-itens" class="secondary-button export-button">Exportar (CSV)</button>
+                </h3>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Nome do Item</th><th>Categoria</th><th>Ação</th></tr></thead>
+                        <tbody id="lista-itens"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Aba Produção -->
+            <div id="producao" class="tab-content">
+                <h2>Novo Lançamento (Produção)</h2>
+                <p>Registre o que foi produzido (a proteína pronta).</p>
+                <form id="form-producao" class="form-container form-container-prod">
+                    <input type="hidden" id="prod-edit-id">
+                    <div class="form-group">
+                        <label for="prod-data">Data</label>
+                        <input type="date" id="prod-data" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="prod-colaborador">Colaborador</label>
+                        <input type="text" id="prod-colaborador" placeholder="Nome" required class="format-capitalize">
+                    </div>
+                    <div class="form-group">
+                        <label for="prod-proteina">Nome da Proteína/Item</label>
+                        <select id="prod-proteina" required>
+                            <option value="">Selecione um item</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="prod-peso">Peso Total (kg) (Opcional)</label>
+                        <input type="number" id="prod-peso" step="0.001" placeholder="Ex: 10.5">
+                    </div>
+                    <div class="form-group">
+                        <label for="prod-porcao">Porção (g) (Opcional)</label>
+                        <input type="number" id="prod-porcao" placeholder="Ex: 200">
+                    </div>
+                    <div class="form-group">
+                        <label for="prod-num-porcoes">Nº de Porções (Obrigatório)</label>
+                        <input type="number" id="prod-num-porcoes" placeholder="Ex: 50" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="submit-button">Adicionar Lançamento</button>
+                    </div>
+                    <div class="form-group" id="cancel-edit-prod-container" style="display: none;">
+                        <button type="button" id="cancel-edit-prod-btn" class="secondary-button cancel-edit-button">Cancelar Edição</button>
+                    </div>
+                </form>
+                <hr>
+                <h3>
+                    Lançamentos de Produção
+                    <button id="export-producao" class="secondary-button export-button">Exportar (CSV)</button>
+                </h3>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Data</th><th>Colaborador</th><th>Item</th><th>Peso (kg)</th><th>Porção (g)</th><th>Nº Porções</th><th>Ação</th></tr></thead>
+                        <tbody id="lista-producao"></tbody>
+                    </table>
+                </div>
+                <hr>
+                <h3>Resumo da Produção (Total)</h3>
+                <div class="table-container">
+                    <table class="resumo-table">
+                        <thead><tr><th>Proteína</th><th>Total de Porções Produzidas</th></tr></thead>
+                        <tbody id="resumo-producao"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Aba Contagem -->
+            <div id="contagem" class="tab-content">
+                <h2>Nova Contagem (Estoque Físico)</h2>
+                <p>Registre o estoque físico (o que você encontrou na geladeira).</p>
+                <form id="form-contagem" class="form-container form-container-contagem">
+                    <input type="hidden" id="cont-edit-id">
+                    <div class="form-group">
+                        <label for="cont-data">Data da Contagem</label>
+                        <input type="date" id="cont-data" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cont-local">Local (Opcional)</label>
+                        <input type="text" id="cont-local" placeholder="Ex: Geladeira 1" class="format-capitalize">
+                    </div>
+                    <div class="form-group">
+                        <label for="cont-proteina">Nome do Item</label>
+                        <select id="cont-proteina" required>
+                            <option value="">Selecione um item</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="cont-unidade">Unidade</label>
+                        <input type="text" id="cont-unidade" list="lista-unidades" value="Porções" required class="format-capitalize">
+                        <datalist id="lista-unidades">
+                            <option value="Porções"></option><option value="Peças"></option><option value="Kg"></option><option value="Unidades"></option><option value="Pacotes"></option>
+                        </datalist>
+                    </div>
+                    <div class="form-group">
+                        <label for="cont-quantidade">Quantidade Contada</label>
+                        <input type="number" id="cont-quantidade" min="0" placeholder="Ex: 50" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="submit-button">Salvar Contagem</button>
+                    </div>
+                    <div class="form-group" id="cancel-edit-cont-container" style="display: none;">
+                        <button type="button" id="cancel-edit-cont-btn" class="secondary-button cancel-edit-button">Cancelar Edição</button>
+                    </div>
+                </form>
+                <hr>
+                <div class="filtro-container">
+                    <div class="form-group">
+                        <label for="cont-filtro-data-inicio">De:</label>
+                        <input type="date" id="cont-filtro-data-inicio">
+                    </div>
+                    <div class="form-group">
+                        <label for="cont-filtro-data-fim">Até:</label>
+                        <input type="date" id="cont-filtro-data-fim">
+                    </div>
+                    <div class="form-group">
+                        <button id="cont-filtro-btn" class="secondary-button" style="width: 100%; padding: 12px;">Filtrar Tabela</button>
+                    </div>
+                </div>
+                <h3>
+                    Contagens Salvas (Filtrado)
+                    <div class="table-header-buttons">
+                        <button id="copiar-contagem-btn" class="secondary-button copy-button">Copiar Contagem</button>
+                        <button id="export-contagem" class="secondary-button export-button">Exportar (CSV)</button>
+                    </div>
+                </h3>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Data</th><th>Local</th><th>Item</th><th>Categoria</th><th>Quantidade</th><th>Unidade</th><th>Ação</th></tr></thead>
+                        <tbody id="lista-contagem"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Aba Vendas -->
+            <div id="vendas" class="tab-content">
+                <h2>Vendas</h2>
+                <h3>Registrar Prato (Ficha Técnica)</h3>
+                <p>Crie a "Ficha Técnica" de um prato. Use os itens cadastrados na Produção.</p>
+                <form id="form-ficha">
+                    <input type="hidden" id="ficha-edit-id">
+                    <div class="form-container" style="margin-bottom: 15px;">
+                        <div class="form-group">
+                            <label for="ficha-nome-prato">Nome do Prato</label>
+                            <input type="text" id="ficha-nome-prato" placeholder="Ex: X-Tudo" required class="format-capitalize">
+                        </div>
+                        <div class="form-group">
+                            <label for="ficha-tipo-prato">Tipo de Prato</label>
+                            <input type="text" id="ficha-tipo-prato" list="lista-tipos-prato" placeholder="Ex: Individual" required class="format-capitalize">
+                            <datalist id="lista-tipos-prato">
+                                <option value="Individual"></option>
+                                <option value="Executivo"></option>
+                                <option value="Compartilhado"></option>
+                                <option value="Evento"></option>
+                                <option value="Outro"></option>
+                            </datalist>
+                        </div>
+                    </div>
+                    <h4>Ingredientes (Itens da Produção)</h4>
+                    <div id="ingredientes-container"></div>
+                    <div class="form-group">
+                        <button type="button" id="add-ingrediente-btn" class="secondary-button">+ Adicionar Item</button>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="submit-button">Salvar Ficha Técnica</button>
+                    </div>
+                    <div class="form-group" id="cancel-edit-ficha-container" style="display: none;">
+                        <button type="button" id="cancel-edit-ficha-btn" class="secondary-button cancel-edit-button">Cancelar Edição</button>
+                    </div>
+                </form>
+                <hr>
+                <h3>
+                    Fichas Técnicas Salvas
+                    <button id="export-fichas" class="secondary-button export-button">Exportar (CSV)</button>
+                </h3>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Colaborador</th><th>Nome do Prato</th><th>Tipo</th><th>Ingredientes (Item | Qtd. Porções)</th><th>Ação</th></tr></thead>
+                        <tbody id="lista-fichas"></tbody>
+                    </table>
+                </div>
+                <hr>
+                <h3>Registrar Venda</h3>
+                <p>Registre a venda de um prato já cadastrado na Ficha Técnica.</p>
+                <form id="form-venda" class="form-container form-container-venda">
+                    <input type="hidden" id="venda-edit-id">
+                    <!-- ID de Lote removido -->
+                    <div class="form-group">
+                        <label for="venda-data">Data da Venda</label>
+                        <input type="date" id="venda-data" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="venda-prato">Selecione o Prato</label>
+                        <select id="venda-prato" required><option value="">Carregando pratos...</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="venda-quantidade">Quantidade Vendida (Total)</label>
+                        <input type="number" id="venda-quantidade" min="1" value="1" required>
+                    </div>
+                    
+                    <!-- Checkbox de Venda Semanal REMOVIDO -->
+
+                    <div class="form-group">
+                        <button type="submit" class="submit-button">Registrar Venda</button>
+                    </div>
+                    <div class="form-group" id="cancel-edit-venda-container" style="display: none;">
+                        <button type="button" id="cancel-edit-venda-btn" class="secondary-button cancel-edit-button">Cancelar Edição</button>
+                    </div>
+                    
+                    <!-- NOTA de Aviso -->
+                    <p class="form-nota">
+                        <strong>Nota:</strong> Para balanço semanal (PDV), lance o total de vendas da semana em um único dia (ex: Domingo). O Relatório funcionará corretamente ao filtrar pela semana inteira.
+                    </p>
+                </form>
+                
+                <hr>
+                <h3>
+                    Vendas Registradas
+                    <button id="export-vendas" class="secondary-button export-button">Exportar (CSV)</button>
+                </h3>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Data</th><th>Colaborador</th><th>Prato Vendido</th><th>Quantidade</th><th>Ação</th></tr></thead>
+                        <tbody id="lista-vendas"></tbody>
+                    </table>
+                </div>
+                
+                <!-- ATUALIZAÇÃO: Resumo de Vendas -->
+                <hr>
+                <h3>Resumo de Vendas (Total de Pratos)</h3>
+                <div class="table-container">
+                    <table class="resumo-table">
+                        <thead><tr><th>Prato</th><th>Total de Pratos Vendidos</th></tr></thead>
+                        <tbody id="resumo-vendas"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Aba Relatório -->
+            <div id="relatorio" class="tab-content">
+                <h2>
+                    Relatório (Balanço de Estoque)
+                    <button id="export-relatorio" class="secondary-button export-button">Exportar (CSV)</button>
+                </h2>
+                <p>Comparativo do estoque físico (Contado) vs. estoque teórico (Sistema). Apenas contagens em "Porções" são usadas no balanço.</p>
+                <div class="filtro-container">
+                    <div class="form-group">
+                        <label for="filtro-data-inicio">Data Inicial</label>
+                        <input type="date" id="filtro-data-inicio">
+                    </div>
+                    <div class="form-group">
+                        <label for="filtro-data-fim">Data Final</label>
+                        <input type="date" id="filtro-data-fim">
+                    </div>
+                    <div class="form-group">
+                        <button id="filtro-relatorio-btn" class="secondary-button" style="width: 100%; padding: 12px;">Gerar Relatório</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Item</th><th>Est. Inicial (Contado)</th><th>Produzido (Entrada)</th><th>Vendido (Saída)</th><th>Est. Teórico (Final)</th><th>Est. Físico (Final)</th><th>Diferença (Sobra / Falta)</th></tr></thead>
+                        <tbody id="lista-relatorio"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MELHORIA: Caixa de Notificação para substituir os 'alerts' -->
+    <div id="notification-box"></div>
+
+    <!-- SDKs do Firebase e Lógica do App -->
     <script type="module">
         // Importa os módulos necessários
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { 
             getAuth, signInAnonymously, signInWithCustomToken, 
             signInWithEmailAndPassword, signOut, onAuthStateChanged,
-            createUserWithEmailAndPassword // NOVO: Para registo
+            createUserWithEmailAndPassword
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
             getFirestore, collection, doc, addDoc, onSnapshot, 
             deleteDoc, query, where, writeBatch, setLogLevel,
-            getDoc, setDoc // NOVO: Para definir a função
+            getDoc, setDoc, updateDoc, getDocs // Adicionado getDocs
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ***************************************************************
-        // CONFIGURAÇÃO MANUAL DO FIREBASE
-        // (O seu NOVO bloco de configuração está colado aqui)
-        // ***************************************************************
+        // --- Configuração do Firebase (Modo Produção) ---
         
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
+        // !!! IMPORTANTE !!!
+        // COLE A SUA CONFIGURAÇÃO DO FIREBASE AQUI
+        // (Substitua este bloco de exemplo)
+         const firebaseConfig = {
 
   apiKey: "AIzaSyA8dGdSRGDtgNVgnI5vmpxsIKdjkhWAnTo",
 
@@ -39,24 +959,21 @@
   messagingSenderId: "97213975077",
 
   appId: "1:97213975077:web:f917ed086a26d378f90dcc"
-
 };
+
+
+        // Use o AppID da configuração
+        const appId = firebaseConfig.appId;
+        // --- Fim da Configuração ---
         
-        // ***************************************************************
-        // FIM DA CONFIGURAÇÃO MANUAL
-        // ***************************************************************
-
-
         // --- VARIÁVEIS GLOBAIS ---
         let app, auth, db;
         let userId;
         let userRole = null; 
+        let currentUserName = null; // ATUALIZAÇÃO: Nome do usuário
         
         let listeners = [];
         
-        // Usa o AppID da configuração manual
-        const appId = firebaseConfig.appId;
-
         // Caches locais
         let itensDB = [];
         let producaoDB = [];
@@ -69,541 +986,133 @@
         
         let relatorioCache = []; 
 
-        // --- ELEMENTOS DO DOM (Constantes) ---
-        const loginContainer = document.getElementById('login-container');
-        const appContainer = document.getElementById('app-container');
+        // --- Variáveis do DOM (declaradas globalmente) ---
+        let loginContainer, appContainer, loginForm, loginName, loginPassword, loginError, showRegisterLink;
+        let registerContainer, registerForm, registerNomeCompleto, registerNomeLogin, registerPassword, registerFuncao, registerError, showLoginLink;
+        let logoutButton, userNameDisplay, formItens, listaItens, itemNome, itemCategoria, formProducao, listaProducao;
+        let prodData, prodColaborador, prodProteina, prodPeso, prodPorcao, prodNumPorcoes, resumoProducao;
+        let formContagem, listaContagem, contData, contLocal, contProteina, contUnidade, contQuantidade;
+        let copiarContagemBtn, contFiltroDataInicio, contFiltroDataFim, contFiltroBtn;
+        let formFicha, listaFichas, fichaNomePrato, fichaTipoPrato, addIngredienteBtn, ingredientesContainer;
+        let formVenda, listaVendas, vendaData, vendaPratoSelect, vendaQuantidade, resumoVendas; // 'vendaSemanal' removido
+        let filtroDataInicio, filtroDataFim, filtroRelatorioBtn, listaRelatorio;
+        let darkModeToggle, notificationBox;
         
-        // Formulário de Login
-        const loginForm = document.getElementById('login-form');
-        const loginName = document.getElementById('login-name');
-        const loginPassword = document.getElementById('login-password');
-        const loginError = document.getElementById('login-error');
-        const showRegisterLink = document.getElementById('show-register-link');
+        // --- MELHORIA: Variáveis de Edição ---
+        let itemEditId, itemSubmitButton, cancelEditItemBtn, cancelEditItemContainer;
+        let prodEditId, prodSubmitButton, cancelEditProdBtn, cancelEditProdContainer;
+        let contEditId, contSubmitButton, cancelEditContBtn, cancelEditContContainer;
+        let fichaEditId, fichaSubmitButton, cancelEditFichaBtn, cancelEditFichaContainer;
+        let vendaEditId, vendaSubmitButton, cancelEditVendaBtn, cancelEditVendaContainer; // 'vendaBatchId' removido
         
-        // NOVO: Formulário de Registo
-        const registerContainer = document.getElementById('register-container');
-        const registerForm = document.getElementById('register-form');
-        const registerNomeCompleto = document.getElementById('register-nome-completo');
-        const registerNomeLogin = document.getElementById('register-nome-login');
-        const registerPassword = document.getElementById('register-password');
-        const registerFuncao = document.getElementById('register-funcao');
-        const registerError = document.getElementById('register-error');
-        const showLoginLink = document.getElementById('show-login-link');
-        
-        // Elementos do App
-        const logoutButton = document.getElementById('logout-button');
-        const userNameDisplay = document.getElementById('user-name-display');
-        const formItens = document.getElementById('form-itens');
-        const listaItens = document.getElementById('lista-itens');
-        const itemNome = document.getElementById('item-nome');
-        const itemCategoria = document.getElementById('item-categoria');
-        const formProducao = document.getElementById('form-producao');
-        const listaProducao = document.getElementById('lista-producao');
-        const prodData = document.getElementById('prod-data');
-        const prodColaborador = document.getElementById('prod-colaborador');
-        const prodProteina = document.getElementById('prod-proteina');
-        const prodPeso = document.getElementById('prod-peso');
-        const prodPorcao = document.getElementById('prod-porcao');
-        const prodNumPorcoes = document.getElementById('prod-num-porcoes');
-        const resumoProducao = document.getElementById('resumo-producao');
-        const formContagem = document.getElementById('form-contagem');
-        const listaContagem = document.getElementById('lista-contagem');
-        const contData = document.getElementById('cont-data');
-        const contLocal = document.getElementById('cont-local');
-        const contProteina = document.getElementById('cont-proteina');
-        const contUnidade = document.getElementById('cont-unidade');
-        const contQuantidade = document.getElementById('cont-quantidade');
-        const copiarContagemBtn = document.getElementById('copiar-contagem-btn');
-        const contFiltroDataInicio = document.getElementById('cont-filtro-data-inicio');
-        const contFiltroDataFim = document.getElementById('cont-filtro-data-fim');
-        const contFiltroBtn = document.getElementById('cont-filtro-btn');
-        const formFicha = document.getElementById('form-ficha'); 
-        const listaFichas = document.getElementById('lista-fichas'); 
-        const fichaNomePrato = document.getElementById('ficha-nome-prato');
-        const fichaTipoPrato = document.getElementById('ficha-tipo-prato');
-        const addIngredienteBtn = document.getElementById('add-ingrediente-btn');
-        const ingredientesContainer = document.getElementById('ingredientes-container');
-        const formVenda = document.getElementById('form-venda');
-        const listaVendas = document.getElementById('lista-vendas');
-        const vendaData = document.getElementById('venda-data');
-        const vendaPratoSelect = document.getElementById('venda-prato');
-        const vendaQuantidade = document.getElementById('venda-quantidade');
-        const filtroDataInicio = document.getElementById('filtro-data-inicio');
-        const filtroDataFim = document.getElementById('filtro-data-fim');
-        const filtroRelatorioBtn = document.getElementById('filtro-relatorio-btn');
-        const listaRelatorio = document.getElementById('lista-relatorio');
+        // --- MELHORIA: Elemento e Lógica de Notificação ---
+        let notificationTimer;
+        let itensCarregados = false; // Flag para Ficha Técnica
 
-        // --- ESTILO CSS ---
-        const style = document.createElement('style');
-        style.textContent = `
-            /* Estilo geral */
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                margin: 0;
-                padding: 0;
-                background-color: #f4f7f6;
-                color: #333;
-            }
-            header {
-                background-color: #2c3e50; /* Azul escuro */
-                color: white;
-                padding: 1rem 1.5rem; /* Reduzido padding */
-                display: flex; /* Flexbox */
-                justify-content: space-between; /* Alinha itens */
-                align-items: center; /* Centraliza verticalmente */
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            }
-            header h1 { 
-                margin: 0; 
-                font-size: 1.25rem; /* Reduzido tamanho */
-                text-align: left;
-            }
-            /* NOVO: Header Info (Usuário e Logout) */
-            .header-info {
-                display: flex;
-                align-items: center;
-                font-size: 0.9rem;
-            }
-            #user-name-display {
-                margin-right: 15px;
-                font-weight: 500;
-            }
-            #logout-button {
-                background-color: #e74c3c;
-                color: white;
-                border: none;
-                padding: 8px 12px;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 0.9rem;
-            }
-            #logout-button:hover {
-                background-color: #c0392b;
-            }
-
-            main {
-                padding: 1rem;
-                max-width: 900px;
-                margin: 0 auto;
+        /**
+         * Mostra uma notificação não-bloqueante na tela.
+         * @param {string} message - A mensagem a ser exibida.
+         * @param {boolean} [isError=false] - Define se é uma notificação de erro (vermelha).
+         */
+        function showNotification(message, isError = false) {
+            if (!notificationBox) {
+                notificationBox = document.getElementById('notification-box');
+                if (!notificationBox) return; // Sai se ainda não existe
             }
             
-            /* NOVO: Telas de Login/Registo */
-            .auth-container {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                min-height: 100vh;
-                background-color: #f4f7f6;
-            }
-            .auth-form {
-                background: white;
-                padding: 2.5rem;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                width: 100%;
-                max-width: 400px;
-            }
-            .auth-form h2 {
-                text-align: center;
-                margin-top: 0;
-                color: #2c3e50;
-            }
-            .auth-form .form-group { margin-bottom: 1.25rem; }
-            .auth-form label {
-                display: block;
-                margin-bottom: 5px;
-                font-weight: 600;
-            }
-            .auth-form input, .auth-form select {
-                width: 100%;
-                padding: 12px;
-                border: 1px solid #ccc;
-                border-radius: 6px;
-                box-sizing: border-box; /* Garante padding correto */
-            }
-            .auth-form button {
-                width: 100%;
-                padding: 12px;
-                background-color: #3498db;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-size: 1.1em;
-                font-weight: 600;
-                cursor: pointer;
-            }
-            .auth-form .auth-link {
-                text-align: center;
-                margin-top: 1.5rem;
-                font-size: 0.9em;
-                color: #3498db;
-                cursor: pointer;
-            }
-            .auth-form .auth-link:hover {
-                text-decoration: underline;
-            }
-            .auth-error {
-                color: #e74c3c;
-                text-align: center;
-                margin-top: 1rem;
-                display: none; /* Oculto por padrão */
-            }
+            clearTimeout(notificationTimer); // Limpa timer anterior
             
-            /* NOVO: Controle de Visibilidade */
-            #app-container, #register-container {
-                display: none; /* App e Registo ocultos por padrão */
-            }
-            .tab-hidden {
-                display: none !important; /* Força esconder a aba */
-            }
-            /* Oculta botões de delete por padrão */
-            .action-button {
-                display: none;
-            }
-            /* Acesso de Proprietário: Mostra botões de delete */
-            body.role-Proprietário .action-button {
-                display: inline-block;
-                background-color: #e74c3c;
-                color: white;
-                border: none;
-                padding: 5px 10px;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 0.9em;
-            }
-            body.role-Proprietário .action-button:hover {
-                background-color: #c0392b;
-            }
-
-            /* Abas */
-            .tab-nav {
-                background-color: #ffffff;
-                overflow: hidden;
-                border-bottom: 2px solid #ddd;
-                display: flex;
-                justify-content: flex-start;
-                flex-wrap: wrap; /* Permite quebrar linha em telas pequenas */
-                border-radius: 8px 8px 0 0;
-            }
-            .tab-button {
-                background-color: inherit;
-                border: none;
-                outline: none;
-                cursor: pointer;
-                padding: 14px 20px;
-                font-size: 1rem;
-                font-weight: 500;
-                color: #555;
-                transition: 0.3s;
-                border-bottom: 3px solid transparent;
-                margin-bottom: -2px;
-            }
-            .tab-button:hover { background-color: #f9f9f9; color: #111; }
-            .tab-button.active {
-                color: #3498db; /* Azul */
-                font-weight: 600;
-                border-bottom: 3px solid #3498db;
-            }
-
-            /* Conteúdo das Abas */
-            .tab-content {
-                display: none;
-                padding: 20px;
-                border: 1px solid #ddd;
-                background-color: white;
-                border-top: none;
-                border-radius: 0 0 8px 8px;
-                animation: fadeIn 0.5s;
-            }
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(10px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-            .tab-content.active { display: block; }
+            notificationBox.textContent = message;
+            notificationBox.classList.add('show');
             
-            h2, h3 {
-                color: #2c3e50;
-                border-bottom: 2px solid #f4f7f6;
-                padding-bottom: 10px;
-                margin-top: 1.5rem;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
+            if (isError) {
+                notificationBox.classList.add('error');
+            } else {
+                notificationBox.classList.remove('error');
             }
 
-            /* Formulários */
-            .form-container {
-                display: grid;
-                grid-template-columns: 1fr; 
-                gap: 15px;
-            }
-            @media (min-width: 600px) {
-                .form-container { grid-template-columns: 1fr 1fr; }
-            }
-            .form-container-prod {
-                grid-template-columns: 1fr;
-            }
-            @media (min-width: 700px) {
-                .form-container-prod {
-                    grid-template-columns: 1fr 1fr 1fr;
-                }
-            }
-            .form-container-3col {
-                grid-template-columns: 1fr;
-            }
-            @media (min-width: 700px) {
-                .form-container-3col {
-                    grid-template-columns: 2fr 1fr 1fr;
-                }
-            }
-            .form-container-contagem {
-                grid-template-columns: 1fr;
-            }
-             @media (min-width: 700px) {
-                .form-container-contagem {
-                    grid-template-columns: 1fr 1fr 1fr 1fr;
-                }
-            }
+            notificationTimer = setTimeout(() => {
+                notificationBox.classList.remove('show');
+            }, 3000);
+        }
 
-
-            .form-group { display: flex; flex-direction: column; }
-            .form-group label {
-                margin-bottom: 5px;
-                font-weight: 600;
-                font-size: 0.9em;
-                color: #555;
+        // --- ATUALIZAÇÃO: Função de Formatação de Texto (CORRIGIDA) ---
+        function capitalizeWords(str) {
+            if (!str) return '';
+            try {
+                // Tenta usar o regex com Unicode
+                return str.toLowerCase().replace(/(^|\s)\p{L}/gu, (char) => char.toUpperCase());
+            } catch (e) {
+                // Fallback para navegadores antigos (sem \p{L})
+                console.warn("Regex Unicode (\\p{L}) não suportado. Usando fallback.");
+                return str.toLowerCase().replace(/(^|\s)[a-z]/g, (char) => char.toUpperCase());
             }
-            .form-group input, .form-group select {
-                padding: 12px;
-                border: 1px solid #ccc;
-                border-radius: 6px;
-                font-size: 1em;
-                background-color: #fdfdfd;
-            }
-            .form-group input:focus, .form-group select:focus {
-                outline: none;
-                border-color: #3498db;
-                box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
-            }
-            
-            /* Botões */
-            .submit-button {
-                grid-column: 1 / -1; 
-                padding: 12px;
-                background-color: #27ae60; /* Verde */
-                color: white;
-                border: none;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 1.1em;
-                font-weight: 600;
-                transition: background-color 0.3s;
-            }
-            .submit-button:hover { background-color: #219150; }
-            
-            .secondary-button {
-                padding: 10px 15px;
-                background-color: #3498db; /* Azul */
-                color: white;
-                border: none;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 0.9em;
-                font-weight: 500;
-                transition: background-color 0.3s;
-                margin-top: 5px;
-            }
-            .secondary-button:hover { background-color: #2980b9; }
-
-            .copy-button {
-                background-color: #9b59b6; /* Roxo */
-                font-size: 0.8em;
-                padding: 8px 12px;
-                margin-left: 10px;
-            }
-            .copy-button:hover {
-                background-color: #8e44ad;
-            }
-            .copy-button.copied { /* Feedback de cópia */
-                background-color: #27ae60; /* Verde */
-            }
-
-            .export-button {
-                background-color: #16a085; /* Verde (diferente) */
-                font-size: 0.8em;
-                padding: 8px 12px;
-                margin-left: auto;
-            }
-            .export-button:hover {
-                background-color: #117a65;
-            }
-
-            hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
-            ul { line-height: 1.6; }
-
-            /* Tabela */
-            .table-container {
-                width: 100%;
-                overflow-x: auto; /* Para rolagem em telas pequenas */
-            }
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 15px;
-            }
-            th, td {
-                border: 1px solid #ddd;
-                padding: 10px;
-                text-align: left;
-                vertical-align: middle;
-            }
-            th { background-color: #f9f9f9; font-weight: 600; }
-            tr:nth-child(even) { background-color: #fdfdfd; }
-            
-            tbody:empty::after {
-                content: "Carregando dados do Firebase...";
-                display: table-cell;
-                padding: 15px;
-                text-align: center;
-                color: #888;
-                font-style: italic;
-            }
-            
-            /* Tabela de Resumo */
-            .resumo-table td:last-child {
-                font-weight: bold;
-                font-size: 1.1em;
-                text-align: right;
-            }
-            .resumo-table tr:hover {
-                background-color: #f5faff;
-            }
-
-            /* Ingredientes na ficha técnica */
-            .ingrediente-item {
-                display: grid;
-                grid-template-columns: 2fr 1fr 1fr;
-                gap: 10px;
-                align-items: center;
-                padding: 10px;
-                border: 1px dashed #ccc;
-                border-radius: 6px;
-                margin-bottom: 10px;
-            }
-            .ingrediente-item button {
-                background-color: #e74c3c;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 8px;
-                cursor: pointer;
-            }
-            .ingredientes-list {
-                list-style-type: none;
-                padding: 0;
-                margin: 0;
-                font-size: 0.9em;
-            }
-            .ingredientes-list li {
-                border-bottom: 1px solid #eee;
-                padding: 2px 0;
-            }
-            .ingredientes-list li:last-child {
-                border-bottom: none;
-            }
-            
-            /* Filtro de Relatório e Contagem */
-            .filtro-container {
-                background-color: #fdfdfd;
-                border: 1px solid #eee;
-                border-radius: 8px;
-                padding: 15px;
-                margin-bottom: 20px;
-                display: grid;
-                grid-template-columns: 1fr 1fr 1fr;
-                gap: 15px;
-                align-items: flex-end;
-            }
-            @media (max-width: 600px) {
-                .filtro-container {
-                    grid-template-columns: 1fr;
-                }
-            }
-            
-            /* Contêiner para botões da tabela */
-            .table-header-buttons {
-                display: flex;
-                margin-left: auto; /* Joga para a direita */
-            }
-        `;
-        document.head.appendChild(style);
-
+        }
 
         // --- FUNÇÕES DE INICIALIZAÇÃO E DADOS ---
 
         async function initFirebase() {
             try {
-                // USA A CONFIGURAÇÃO MANUAL NO TOPO DO SCRIPT
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
                 setLogLevel('Debug');
                 
-                // Listener principal de autenticação
+                // --- INÍCIO DO CÓDIGO DE LOGIN REAL (PRODUÇÃO) ---
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
-                        // --- UTILIZADOR ESTÁ LOGADO ---
                         userId = user.uid;
                         console.log("Utilizador logado:", userId);
                         
-                        // Define os caminhos das coleções
+                        // Define os caminhos das coleções (Modo Produção)
+                        // Caminho público para dados compartilhados
                         const dataPath = `artifacts/${appId}/public/data`;
                         itensCol = collection(db, `${dataPath}/itens`);
                         producaoCol = collection(db, `${dataPath}/producao`);
                         contagemCol = collection(db, `${dataPath}/contagem`);
                         fichasCol = collection(db, `${dataPath}/fichas`);
                         vendasCol = collection(db, `${dataPath}/vendas`);
-                        
+                        // Coleção separada para roles (geralmente na raiz ou caminho específico)
                         userRolesCol = collection(db, `user-roles`); 
 
-                        // Busca a função (role) do utilizador
                         const userRoleDoc = await getDoc(doc(userRolesCol, userId));
                         
                         if (userRoleDoc.exists()) {
                             const userData = userRoleDoc.data();
                             userRole = userData.funcao; 
-                            userNameDisplay.textContent = `Olá, ${userData.nome || 'Utilizador'}`;
+                            currentUserName = userData.nome || 'Utilizador'; // ATUALIZAÇÃO
+                            userNameDisplay.textContent = `Olá, ${currentUserName}`; // ATUALIZAÇÃO
                             
                             setupUIForRole(userRole);
                             carregarDadosListeners();
                             
                             appContainer.style.display = 'block';
-                            loginContainer.style.display = 'none'; // Esconde login
-                            registerContainer.style.display = 'none'; // Esconde registo
+                            loginContainer.style.display = 'none'; 
+                            registerContainer.style.display = 'none'; 
                             loginError.style.display = 'none';
                             registerError.style.display = 'none';
 
                         } else {
-                            console.error("Utilizador sem função (role) definida na base de dados.");
-                            // Se foi um registo novo, pode demorar 1s
+                            // Tenta novamente caso o registro tenha acabado de acontecer
+                            console.error("Utilizador sem função (role) definida. Tentando novamente em 1.5s...");
                             setTimeout(async () => {
                                 const retryDoc = await getDoc(doc(userRolesCol, userId));
                                 if (retryDoc.exists()) {
-                                    // Funcionou na segunda tentativa
                                     const userData = retryDoc.data();
                                     userRole = userData.funcao; 
-                                    userNameDisplay.textContent = `Olá, ${userData.nome || 'Utilizador'}`;
+                                    currentUserName = userData.nome || 'Utilizador'; // ATUALIZAÇÃO
+                                    userNameDisplay.textContent = `Olá, ${currentUserName}`; // ATUALIZAÇÃO
                                     setupUIForRole(userRole);
                                     carregarDadosListeners();
                                     appContainer.style.display = 'block';
                                     loginContainer.style.display = 'none';
                                     registerContainer.style.display = 'none';
                                 } else {
-                                    // Falhou mesmo
-                                    alert("Erro: A sua conta não tem permissões. Contacte o administrador.");
+                                    // Falha real
+                                    showNotification("Erro: A sua conta não tem permissões. Contacte o admin.", true);
                                     await signOut(auth);
                                 }
-                            }, 1500); // Espera 1.5s
+                            }, 1500);
                         }
                         
                     } else {
@@ -611,6 +1120,7 @@
                         console.log("Utilizador deslogado.");
                         userId = null;
                         userRole = null;
+                        currentUserName = null; // ATUALIZAÇÃO
                         
                         listeners.forEach(unsubscribe => unsubscribe());
                         listeners = [];
@@ -624,44 +1134,40 @@
                         document.body.className = ''; 
                     }
                 });
+                // --- FIM DO CÓDIGO DE LOGIN REAL ---
+                
 
             } catch (error) {
                 console.error("Erro ao inicializar Firebase:", error);
-                // Remove a verificação antiga de __firebase_config
-                alert("Erro de conexão com o Firebase: " + error.message);
-                if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("AIzaSy")) {
-                    // Este é um alerta suave, pois a chave parece estar lá
-                    console.warn("Verifique se a chave API do Firebase está correta.");
-                } else if (firebaseConfig.apiKey === "COLE-A-SUA-CHAVE-AQUI") {
-                     alert("ERRO CRÍTICO: Você não colou a sua firebaseConfig no código!");
+                if (firebaseConfig.apiKey === "COLE-SUA-API-KEY-AQUI") {
+                     alert("ERRO: Você não colou sua 'firebaseConfig' no arquivo de produção!");
+                } else {
+                   alert("Erro fatal ao conectar com Firebase: " + error.message);
                 }
             }
         }
         
-        // NOVO: Controla a UI baseado na Função (Role)
         function setupUIForRole(role) {
-            // Adiciona a classe ao body para controlar CSS (ex: botões delete)
             document.body.className = `role-${role}`;
+             if (localStorage.getItem('darkMode') === 'enabled') {
+                document.body.classList.add('dark-mode');
+            }
             
-            // Seleciona todos os botões das abas
             const tabItens = document.querySelector('[onclick*="itens"]');
             const tabProducao = document.querySelector('[onclick*="producao"]');
             const tabContagem = document.querySelector('[onclick*="contagem"]');
             const tabVendas = document.querySelector('[onclick*="vendas"]');
             const tabRelatorio = document.querySelector('[onclick*="relatorio"]');
 
-            // Esconde todas por defeito
             [tabItens, tabProducao, tabContagem, tabVendas, tabRelatorio].forEach(tab => {
                 if(tab) tab.classList.add('tab-hidden');
             });
 
-            // Mostra abas baseado na função
             switch (role) {
                 case "Proprietário":
                     [tabItens, tabProducao, tabContagem, tabVendas, tabRelatorio].forEach(tab => {
                         if(tab) tab.classList.remove('tab-hidden');
                     });
-                    // Mostra a primeira aba visível
                     showTab('itens', tabItens);
                     break;
                 case "Produção":
@@ -677,30 +1183,39 @@
                     showTab('vendas', tabVendas);
                     break;
                 default:
-                    // Nenhuma aba visível se a função não for reconhecida
                     console.warn("Função desconhecida:", role);
+                    // Esconde tudo se a função for inválida
+                    showTab('', null);
                     break;
             }
         }
 
-        // `carregarDados` agora apenas inicia os listeners
         function carregarDadosListeners() {
-            // Limpa listeners antigos
             listeners.forEach(unsubscribe => unsubscribe());
             listeners = [];
+            itensCarregados = false; // Reseta a flag
+            let fichasCarregadas = false;
 
-            // Listener para Itens
+            function checkInitialLoad() {
+                if (itensCarregados && fichasCarregadas) {
+                    if (ingredientesContainer.children.length === 0) {
+                        adicionarCampoIngrediente();
+                    }
+                }
+            }
+
             listeners.push(onSnapshot(itensCol, (snapshot) => {
                 itensDB = [];
                 snapshot.forEach(doc => {
-                    itensDB.push({ ...doc.data(), id: doc.id }); // Armazena o ID do documento
+                    itensDB.push({ ...doc.data(), id: doc.id }); 
                 });
                 console.log("Itens carregados:", itensDB.length);
+                itensCarregados = true; // Define a flag
                 renderizarTabelaItens();
-                atualizarDropdownsItens();
+                atualizarDropdownsItens(); 
+                checkInitialLoad();
             }, (error) => console.error("Erro ao carregar itens:", error)));
             
-            // Listener para Produção
             listeners.push(onSnapshot(producaoCol, (snapshot) => {
                 producaoDB = [];
                 snapshot.forEach(doc => {
@@ -711,28 +1226,27 @@
                 renderizarResumoProducao();
             }, (error) => console.error("Erro ao carregar produção:", error)));
 
-            // Listener para Contagem
             listeners.push(onSnapshot(contagemCol, (snapshot) => {
                 contagemDB = [];
                 snapshot.forEach(doc => {
                     contagemDB.push({ ...doc.data(), id: doc.id });
                 });
                 console.log("Contagem carregada:", contagemDB.length);
-                renderizarTabelaContagem(true); // Re-renderiza a tabela com filtro
+                renderizarTabelaContagem(true); 
             }, (error) => console.error("Erro ao carregar contagem:", error)));
             
-            // Listener para Fichas
             listeners.push(onSnapshot(fichasCol, (snapshot) => {
                 fichasDB = [];
                 snapshot.forEach(doc => {
                     fichasDB.push({ ...doc.data(), id: doc.id });
                 });
                 console.log("Fichas carregadas:", fichasDB.length);
+                fichasCarregadas = true;
                 renderizarTabelaFichas();
-                atualizarSelectPratosVenda();
+                atualizarSelectPratosVenda(); 
+                checkInitialLoad();
             }, (error) => console.error("Erro ao carregar fichas:", error)));
             
-            // Listener para Vendas
             listeners.push(onSnapshot(vendasCol, (snapshot) => {
                 vendasDB = [];
                 snapshot.forEach(doc => {
@@ -740,26 +1254,26 @@
                 });
                 console.log("Vendas carregadas:", vendasDB.length);
                 renderizarTabelaVendas();
+                renderizarResumoVendas(); // ATUALIZAÇÃO
             }, (error) => console.error("Erro ao carregar vendas:", error)));
-
-            // Adiciona o primeiro ingrediente na Ficha Técnica (após dados carregarem)
-            if (ingredientesContainer.children.length === 0) {
-                adicionarCampoIngrediente();
-            }
         }
         
         // --- FUNÇÕES DE RENDERIZAÇÃO (VISUAL) ---
         
-        // Modificado para usar o ID do Documento
         function renderizarTabelaItens() {
             listaItens.innerHTML = '';
             itensDB.sort((a,b) => a.nome.localeCompare(b.nome));
-            itensDB.forEach(item => { // 'index' não é mais necessário
+            itensDB.forEach(item => {
                 const tr = document.createElement('tr');
+                const safeNome = (item.nome || '').replace(/'/g, "\\'");
+                const safeCategoria = (item.categoria || '').replace(/'/g, "\\'");
                 tr.innerHTML = `
                     <td>${item.nome}</td>
                     <td>${item.categoria}</td>
-                    <td>
+                    <td style="min-width: 140px;">
+                        <button class="action-button edit-button" onclick="editarItemItem('${item.id}', '${safeNome}', '${safeCategoria}')">
+                            Editar
+                        </button>
                         <button class="action-button" onclick="excluirItemItem('${item.id}')">
                             Excluir
                         </button>
@@ -771,20 +1285,31 @@
         
         function atualizarDropdownsItens() {
             let options = '<option value="">Selecione um item...</option>';
-            itensDB.forEach(item => {
+            itensDB.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(item => {
                 options += `<option value="${item.nome}">${item.nome}</option>`;
             });
             
-            prodProteina.innerHTML = options;
-            contProteina.innerHTML = options;
+            if(prodProteina) prodProteina.innerHTML = options;
+            if(contProteina) contProteina.innerHTML = options;
+            
+            if(ingredientesContainer) {
+                const selectsFicha = ingredientesContainer.querySelectorAll('.ficha-ingrediente-proteina');
+                selectsFicha.forEach(select => {
+                    const valorAntigo = select.value;
+                    select.innerHTML = options;
+                    select.value = valorAntigo; 
+                });
+            }
         }
 
-        // Modificado para usar o ID do Documento
         function renderizarTabelaProducao() {
             listaProducao.innerHTML = ''; 
-            producaoDB.sort((a,b) => b.data.localeCompare(a.data)); // Ordena
+            producaoDB.sort((a,b) => b.data.localeCompare(a.data)); 
             producaoDB.forEach(item => {
                 const tr = document.createElement('tr');
+                const safeColab = (item.colaborador || '').replace(/'/g, "\\'");
+                const safeProt = (item.proteina || '').replace(/'/g, "\\'");
+                
                 tr.innerHTML = `
                     <td>${formatarData(item.data)}</td>
                     <td>${item.colaborador}</td>
@@ -792,7 +1317,11 @@
                     <td>${item.pesoKg || '-'} kg</td>
                     <td>${item.porcaoGramas || '-'} g</td>
                     <td>${item.numPorcoes}</td>
-                    <td>
+                    <td style="min-width: 140px;">
+                        <button class="action-button edit-button" 
+                            onclick="editarItemProducao('${item.id}', '${item.data}', '${safeColab}', '${safeProt}', '${item.pesoKg || ''}', '${item.porcaoGramas || ''}', '${item.numPorcoes}')">
+                            Editar
+                        </button>
                         <button class="action-button" onclick="excluirItemProducao('${item.id}')">
                             Excluir
                         </button>
@@ -803,6 +1332,7 @@
         }
         
         function renderizarResumoProducao() {
+            if (!resumoProducao) return;
             resumoProducao.innerHTML = '';
             const totais = {};
             producaoDB.forEach(item => {
@@ -820,8 +1350,8 @@
             });
         }
         
-        // Modificado para usar o ID do Documento
         function renderizarTabelaContagem(usarFiltro = false) {
+            if (!listaContagem) return;
             listaContagem.innerHTML = '';
             let dataInicio = '1970-01-01';
             let dataFim = '2099-12-31';
@@ -838,6 +1368,11 @@
                 const itemInfo = itensDB.find(i => i.nome === item.proteina);
                 const categoria = (itemInfo && itemInfo.categoria) ? itemInfo.categoria : 'Sem Categoria';
                 const tr = document.createElement('tr');
+                
+                const safeLocal = (item.local || '').replace(/'/g, "\\'");
+                const safeProt = (item.proteina || '').replace(/'/g, "\\'");
+                const safeUni = (item.unidade || '').replace(/'/g, "\\'");
+
                 tr.innerHTML = `
                     <td>${formatarData(item.data)}</td>
                     <td>${item.local || '-'}</td>
@@ -845,7 +1380,11 @@
                     <td>${categoria}</td>
                     <td>${item.quantidade}</td>
                     <td>${item.unidade}</td>
-                    <td>
+                    <td style="min-width: 140px;">
+                        <button class="action-button edit-button"
+                            onclick="editarItemContagem('${item.id}', '${item.data}', '${safeLocal}', '${safeProt}', '${item.quantidade}', '${safeUni}')">
+                            Editar
+                        </button>
                         <button class="action-button" onclick="excluirItemContagem('${item.id}')">
                             Excluir
                         </button>
@@ -855,21 +1394,29 @@
             });
         }
         
-        // Modificado para usar o ID do Documento
         function renderizarTabelaFichas() {
+            if (!listaFichas) return;
             listaFichas.innerHTML = '';
             fichasDB.forEach(ficha => {
                 const tr = document.createElement('tr');
-                const ingredientesHtml = ficha.ingredientes.map(ing => {
+                const ingredientesHtml = (ficha.ingredientes || []).map(ing => {
                     return `<li class="ingredientes-list-item">
                                 <strong>${ing.proteina}:</strong> ${ing.qtdPorcoes} porção(ões)
                             </li>`;
                 }).join('');
+                
+                const safeNome = (ficha.nomePrato || '').replace(/'/g, "\\'");
+                
                 tr.innerHTML = `
+                    <td>${ficha.colaborador || 'N/A'}</td> <!-- COLABORADOR -->
                     <td>${ficha.nomePrato}</td>
                     <td>${ficha.tipoPrato}</td>
                     <td><ul class="ingredientes-list">${ingredientesHtml}</ul></td>
-                    <td>
+                    <td style="min-width: 140px;">
+                         <button class="action-button edit-button"
+                            onclick="editarItemFicha('${ficha.id}')">
+                            Editar
+                        </button>
                         <button class="action-button" onclick="excluirItemFicha('${ficha.id}')">
                             Excluir
                         </button>
@@ -879,17 +1426,25 @@
             });
         }
         
-        // Modificado para usar o ID do Documento
         function renderizarTabelaVendas() {
+            if (!listaVendas) return;
             listaVendas.innerHTML = '';
-            vendasDB.sort((a,b) => b.data.localeCompare(a.data)); // Ordena
+            vendasDB.sort((a,b) => b.data.localeCompare(a.data)); 
             vendasDB.forEach(venda => {
                 const tr = document.createElement('tr');
+                const safePrato = (venda.nomePrato || '').replace(/'/g, "\\'");
+                
+                // Botão de editar está sempre ativo agora
                 tr.innerHTML = `
                     <td>${formatarData(venda.data)}</td>
+                    <td>${venda.colaborador || 'N/A'}</td> <!-- COLABORADOR -->
                     <td>${venda.nomePrato}</td>
                     <td>${venda.quantidade}</td>
-                    <td>
+                    <td style="min-width: 140px;">
+                        <button class="action-button edit-button"
+                            onclick="editarItemVenda('${venda.id}', '${venda.data}', '${safePrato}', '${venda.quantidade}')">
+                            Editar
+                        </button>
                         <button class="action-button" onclick="excluirItemVenda('${venda.id}')">
                             Excluir
                         </button>
@@ -899,15 +1454,37 @@
             });
         }
         
+        // ATUALIZAÇÃO: Resumo de Vendas
+        function renderizarResumoVendas() {
+            if (!resumoVendas) return;
+            resumoVendas.innerHTML = '';
+            const totais = {};
+            vendasDB.forEach(item => {
+                const qtd = item.quantidade || 0;
+                totais[item.nomePrato] = (totais[item.nomePrato] || 0) + qtd;
+            });
+            const pratosOrdenados = Object.keys(totais).sort();
+            pratosOrdenados.forEach(prato => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${prato}</strong></td>
+                    <td>${totais[prato]} pratos</td>
+                `;
+                resumoVendas.appendChild(tr);
+            });
+        }
+
         function criarSelectProteinasHTML() {
             let options = '<option value="">Selecione o Item...</option>';
-            itensDB.forEach(item => {
+            itensDB.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(item => {
                 options += `<option value="${item.nome}">${item.nome}</option>`;
             });
             return `<select class="ficha-ingrediente-proteina" required>${options}</select>`;
         }
         
         function atualizarSelectPratosVenda() {
+            if (!vendaPratoSelect) return;
+            const valorAntigo = vendaPratoSelect.value;
             vendaPratoSelect.innerHTML = '<option value="">Selecione um prato</option>';
             const nomesPratos = [...new Set(fichasDB.map(ficha => ficha.nomePrato))].sort();
             nomesPratos.forEach(nome => {
@@ -916,15 +1493,236 @@
                 option.textContent = nome;
                 vendaPratoSelect.appendChild(option);
             });
+            vendaPratoSelect.value = valorAntigo;
         }
 
         // --- LÓGICA DE EVENTOS ---
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // Inicializa o Firebase
-            initFirebase();
+        // --- Funções Globais (para onclick) ---
+        
+        window.removerCampoIngrediente = (botao) => {
+            if (ingredientesContainer.children.length > 1) {
+                botao.parentElement.remove();
+            } else {
+                showNotification("A ficha deve ter pelo menos um ingrediente.", true);
+            }
+        }
+
+        window.excluirItemItem = async (docId) => {
+            if (userRole !== 'Proprietário') return; 
+            const item = itensDB.find(i => i.id === docId);
+            if (!item) return;
+            const itemNome = item.nome;
+            const emUsoProducao = producaoDB.some(p => p.proteina === itemNome);
+            const emUsoContagem = contagemDB.some(c => c.proteina === itemNome);
+            const emUsoFicha = fichasDB.some(f => f.ingredientes.some(i => i.proteina === itemNome));
+            if (emUsoProducao || emUsoContagem || emUsoFicha) {
+                return showNotification("Não é possível excluir este item, pois ele já está sendo usado.", true);
+            }
+            try {
+                await deleteDoc(doc(itensCol, docId));
+                showNotification("Item excluído.");
+                resetItemForm();
+            } catch (error) {
+                console.error("Erro ao excluir item:", error);
+                showNotification("Erro ao excluir item.", true);
+            }
+        }
+
+        window.excluirItemProducao = async (docId) => {
+            if (userRole !== 'Proprietário') return;
+            try {
+                await deleteDoc(doc(producaoCol, docId));
+                showNotification("Lançamento de produção excluído.");
+                resetProducaoForm();
+            } catch (error) {
+                console.error("Erro ao excluir produção:", error);
+                showNotification("Erro ao excluir produção.", true);
+            }
+        }
+        
+        window.excluirItemContagem = async (docId) => {
+            if (userRole !== 'Proprietário') return;
+            try {
+                await deleteDoc(doc(contagemCol, docId));
+                showNotification("Contagem excluída.");
+                resetContagemForm();
+            } catch (error) {
+                console.error("Erro ao excluir contagem:", error);
+                showNotification("Erro ao excluir contagem.", true);
+            }
+        }
+
+        window.excluirItemFicha = async (docId) => {
+            if (userRole !== 'Proprietário') return;
+             const ficha = fichasDB.find(f => f.id === docId);
+             if (ficha && vendasDB.some(v => v.nomePrato === ficha.nomePrato)) {
+                 return showNotification("Não é possível excluir esta ficha, pois ela já foi usada em vendas.", true);
+             }
+            try {
+                await deleteDoc(doc(fichasCol, docId));
+                showNotification("Ficha técnica excluída.");
+                resetFichaForm();
+            } catch (error) {
+                console.error("Erro ao excluir ficha:", error);
+                showNotification("Erro ao excluir ficha.", true);
+            }
+        }
+        
+        // ATUALIZAÇÃO: Lógica de exclusão simplificada
+        window.excluirItemVenda = async (docId) => {
+            if (userRole !== 'Proprietário') return;
             
-            // Define as datas padrão
+            try {
+                await deleteDoc(doc(vendasCol, docId));
+                showNotification("Venda excluída.");
+                resetVendaForm();
+            } catch (error) {
+                console.error("Erro ao excluir venda:", error);
+                showNotification("Erro ao excluir venda.", true);
+            }
+        }
+
+        // --- TROCA DE ABAS (Navegação) ---
+        window.showTab = (tabId, clickedButton) => {
+            let allContent = document.querySelectorAll('.tab-content');
+            allContent.forEach(content => content.classList.remove('active'));
+            let allButtons = document.querySelectorAll('.tab-button');
+            allButtons.forEach(button => button.classList.remove('active'));
+            
+            const tabToShow = document.getElementById(tabId);
+            if(tabToShow) {
+                tabToShow.classList.add('active');
+            }
+            
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
+            
+            // CORREÇÃO: Só adiciona ingrediente se os itens estiverem carregados
+            if (tabId === 'vendas' && ingredientesContainer.children.length === 0 && itensCarregados) {
+                adicionarCampoIngrediente(); 
+            }
+            if (tabId === 'relatorio') {
+                calcularRelatorioBalanço(filtroDataInicio.value, filtroDataFim.value);
+            }
+        }
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- Atribuição das variáveis do DOM ---
+            loginContainer = document.getElementById('login-container');
+            appContainer = document.getElementById('app-container');
+            loginForm = document.getElementById('login-form');
+            loginName = document.getElementById('login-name');
+            loginPassword = document.getElementById('login-password');
+            loginError = document.getElementById('login-error');
+            showRegisterLink = document.getElementById('show-register-link');
+            registerContainer = document.getElementById('register-container');
+            registerForm = document.getElementById('register-form');
+            registerNomeCompleto = document.getElementById('register-nome-completo');
+            registerNomeLogin = document.getElementById('register-nome-login');
+            registerPassword = document.getElementById('register-password');
+            registerFuncao = document.getElementById('register-funcao');
+            registerError = document.getElementById('register-error');
+            showLoginLink = document.getElementById('show-login-link');
+            logoutButton = document.getElementById('logout-button');
+            userNameDisplay = document.getElementById('user-name-display');
+            darkModeToggle = document.getElementById('dark-mode-toggle');
+            notificationBox = document.getElementById('notification-box');
+
+            // Aba Itens
+            formItens = document.getElementById('form-itens');
+            listaItens = document.getElementById('lista-itens');
+            itemNome = document.getElementById('item-nome');
+            itemCategoria = document.getElementById('item-categoria');
+            itemEditId = document.getElementById('item-edit-id');
+            itemSubmitButton = document.querySelector('#form-itens .submit-button');
+            cancelEditItemBtn = document.getElementById('cancel-edit-item-btn');
+            cancelEditItemContainer = document.getElementById('cancel-edit-item-container');
+
+            // Aba Produção
+            formProducao = document.getElementById('form-producao');
+            listaProducao = document.getElementById('lista-producao');
+            prodData = document.getElementById('prod-data');
+            prodColaborador = document.getElementById('prod-colaborador');
+            prodProteina = document.getElementById('prod-proteina');
+            prodPeso = document.getElementById('prod-peso');
+            prodPorcao = document.getElementById('prod-porcao');
+            prodNumPorcoes = document.getElementById('prod-num-porcoes');
+            resumoProducao = document.getElementById('resumo-producao');
+            prodEditId = document.getElementById('prod-edit-id');
+            prodSubmitButton = document.querySelector('#form-producao .submit-button');
+            cancelEditProdBtn = document.getElementById('cancel-edit-prod-btn');
+            cancelEditProdContainer = document.getElementById('cancel-edit-prod-container');
+
+            // Aba Contagem
+            formContagem = document.getElementById('form-contagem');
+            listaContagem = document.getElementById('lista-contagem');
+            contData = document.getElementById('cont-data');
+            contLocal = document.getElementById('cont-local');
+            contProteina = document.getElementById('cont-proteina');
+            contUnidade = document.getElementById('cont-unidade');
+            contQuantidade = document.getElementById('cont-quantidade');
+            copiarContagemBtn = document.getElementById('copiar-contagem-btn');
+            contFiltroDataInicio = document.getElementById('cont-filtro-data-inicio');
+            contFiltroDataFim = document.getElementById('cont-filtro-data-fim');
+            contFiltroBtn = document.getElementById('cont-filtro-btn');
+            contEditId = document.getElementById('cont-edit-id');
+            contSubmitButton = document.querySelector('#form-contagem .submit-button');
+            cancelEditContBtn = document.getElementById('cancel-edit-cont-btn');
+            cancelEditContContainer = document.getElementById('cancel-edit-cont-container');
+
+            // Aba Vendas (Ficha e Venda)
+            formFicha = document.getElementById('form-ficha');
+            listaFichas = document.getElementById('lista-fichas');
+            fichaNomePrato = document.getElementById('ficha-nome-prato');
+            fichaTipoPrato = document.getElementById('ficha-tipo-prato');
+            addIngredienteBtn = document.getElementById('add-ingrediente-btn');
+            ingredientesContainer = document.getElementById('ingredientes-container');
+            formVenda = document.getElementById('form-venda');
+            listaVendas = document.getElementById('lista-vendas');
+            vendaData = document.getElementById('venda-data');
+            vendaPratoSelect = document.getElementById('venda-prato');
+            vendaQuantidade = document.getElementById('venda-quantidade');
+            // vendaSemanal removido
+            resumoVendas = document.getElementById('resumo-vendas');
+            fichaEditId = document.getElementById('ficha-edit-id');
+            fichaSubmitButton = document.querySelector('#form-ficha .submit-button');
+            cancelEditFichaBtn = document.getElementById('cancel-edit-ficha-btn');
+            cancelEditFichaContainer = document.getElementById('cancel-edit-ficha-container');
+            vendaEditId = document.getElementById('venda-edit-id');
+            // vendaBatchId removido
+            vendaSubmitButton = document.querySelector('#form-venda .submit-button');
+            cancelEditVendaBtn = document.getElementById('cancel-edit-venda-btn');
+            cancelEditVendaContainer = document.getElementById('cancel-edit-venda-container');
+
+            // Aba Relatório
+            filtroDataInicio = document.getElementById('filtro-data-inicio');
+            filtroDataFim = document.getElementById('filtro-data-fim');
+            filtroRelatorioBtn = document.getElementById('filtro-relatorio-btn');
+            listaRelatorio = document.getElementById('lista-relatorio');
+            
+            // --- FIM da Atribuição ---
+
+            initFirebase();
+
+            darkModeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                if (document.body.classList.contains('dark-mode')) {
+                    darkModeToggle.innerHTML = '&#9790;'; // Lua
+                    localStorage.setItem('darkMode', 'enabled');
+                } else {
+                    darkModeToggle.innerHTML = '&#9728;'; // Sol
+                    localStorage.removeItem('darkMode');
+                }
+            });
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                document.body.classList.add('dark-mode');
+                darkModeToggle.innerHTML = '&#9790;'; // Lua
+            }
+            
             const hoje = new Date().toISOString().split('T')[0];
             prodData.value = hoje;
             contData.value = hoje;
@@ -937,7 +1735,6 @@
             contFiltroDataInicio.value = hoje;
             contFiltroDataFim.value = hoje;
             
-            // Botões de Exportação
             document.getElementById('export-itens').addEventListener('click', exportarItens);
             document.getElementById('export-producao').addEventListener('click', exportarProducao);
             document.getElementById('export-contagem').addEventListener('click', exportarContagem);
@@ -945,25 +1742,33 @@
             document.getElementById('export-vendas').addEventListener('click', exportarVendas);
             document.getElementById('export-relatorio').addEventListener('click', exportarRelatorio);
             
-            // Botões de Filtro e Ação
             filtroRelatorioBtn.addEventListener('click', () => {
                 calcularRelatorioBalanço(filtroDataInicio.value, filtroDataFim.value);
             });
             contFiltroBtn.addEventListener('click', () => renderizarTabelaContagem(true));
             copiarContagemBtn.addEventListener('click', copiarContagemFormatada);
             
-            // NOVO: Event listener para Login
+            
+            cancelEditItemBtn.addEventListener('click', resetItemForm);
+            cancelEditProdBtn.addEventListener('click', resetProducaoForm);
+            cancelEditContBtn.addEventListener('click', resetContagemForm);
+            cancelEditFichaBtn.addEventListener('click', resetFichaForm);
+            cancelEditVendaBtn.addEventListener('click', resetVendaForm);
+
+            document.addEventListener('blur', (e) => {
+                if (e.target && e.target.classList.contains('format-capitalize')) {
+                    e.target.value = capitalizeWords(e.target.value);
+                }
+            }, true); 
+
             loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                // ALTERAÇÃO: Converte Nome (Login) para um email
                 const name = loginName.value.trim();
-                const email = `${name.toLowerCase()}@numar.app`; // O seu domínio de app
+                const email = `${name.toLowerCase()}@numar.app`; 
                 const password = loginPassword.value;
                 loginError.style.display = 'none';
-                
                 try {
                     await signInWithEmailAndPassword(auth, email, password);
-                    // O onAuthStateChanged vai tratar do resto
                 } catch (error) {
                     console.error("Erro ao fazer login:", error.code);
                     loginError.textContent = "Login ou senha inválidos.";
@@ -971,17 +1776,14 @@
                 }
             });
             
-            // NOVO: Event listener para Logout
             logoutButton.addEventListener('click', async () => {
                 try {
                     await signOut(auth);
-                    // O onAuthStateChanged vai tratar do resto
                 } catch (error) {
                     console.error("Erro ao fazer logout:", error);
                 }
             });
             
-            // NOVO: Listeners para trocar entre Login e Registo
             showRegisterLink.addEventListener('click', () => {
                 loginContainer.style.display = 'none';
                 registerContainer.style.display = 'flex';
@@ -991,10 +1793,9 @@
                 registerContainer.style.display = 'none';
             });
             
-            // NOVO: Event listener para formulário de Registo
             registerForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const nomeCompleto = registerNomeCompleto.value.trim();
+                const nomeCompleto = capitalizeWords(registerNomeCompleto.value.trim());
                 const nomeLogin = registerNomeLogin.value.trim();
                 const password = registerPassword.value;
                 const funcao = registerFuncao.value;
@@ -1005,8 +1806,6 @@
                     registerError.style.display = 'block';
                     return;
                 }
-                
-                // Segurança: Não permitir que alguém se registe como Proprietário
                 if (funcao === "Proprietário") {
                     registerError.textContent = "Função inválida.";
                     registerError.style.display = 'block';
@@ -1016,20 +1815,14 @@
                 const email = `${nomeLogin.toLowerCase()}@numar.app`;
                 
                 try {
-                    // 1. Cria o utilizador no Authentication
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
                     
-                    // 2. Define a função (role) no Firestore
-                    // Re-define userRolesCol aqui para garantir que existe
                     userRolesCol = collection(db, `user-roles`); 
                     await setDoc(doc(userRolesCol, user.uid), {
                         nome: nomeCompleto,
                         funcao: funcao
                     });
-                    
-                    // Sucesso! O onAuthStateChanged vai tratar de logar o utilizador
-                    
                 } catch (error) {
                     console.error("Erro ao registar:", error.code);
                     if (error.code === 'auth/email-already-in-use') {
@@ -1043,245 +1836,386 @@
                 }
             });
 
-            // Event listener para formulário de Itens
+            // --- Formulário Itens (Criar/Editar) ---
             formItens.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const nome = itemNome.value.trim();
-                const categoria = itemCategoria.value.trim();
-                if (!nome || !categoria) return alert("Preencha Nome e Categoria.");
-                if (itensDB.some(item => item.nome.toLowerCase() === nome.toLowerCase())) {
-                    return alert("Este nome de item já existe.");
+                const nome = capitalizeWords(itemNome.value.trim());
+                const categoria = capitalizeWords(itemCategoria.value.trim());
+                const docId = itemEditId.value; 
+                
+                if (!nome || !categoria) return showNotification("Preencha Nome e Categoria.", true);
+                
+                try {
+                    if (docId) {
+                        if (itensDB.some(item => item.nome.toLowerCase() === nome.toLowerCase() && item.id !== docId)) {
+                             return showNotification("Este nome de item já pertence a outro item.", true);
+                        }
+                        const itemRef = doc(itensCol, docId);
+                        await updateDoc(itemRef, { nome, categoria }); 
+                        showNotification('Item atualizado com sucesso!');
+                    } else {
+                        if (itensDB.some(item => item.nome.toLowerCase() === nome.toLowerCase())) {
+                            return showNotification("Este nome de item já existe.", true);
+                        }
+                        await addDoc(itensCol, { nome, categoria }); 
+                        showNotification('Novo item salvo!');
+                    }
+                    resetItemForm(); 
+                } catch (error) {
+                    console.error("Erro ao salvar item:", error);
+                    showNotification("Erro ao salvar item.", true);
+                }
+            });
+            
+            // --- Formulário Produção (Criar/Editar) ---
+            formProducao.addEventListener('submit', async (e) => {
+                e.preventDefault(); 
+                const docId = prodEditId.value;
+                const data = {
+                    data: prodData.value,
+                    colaborador: capitalizeWords(prodColaborador.value.trim()), 
+                    proteina: prodProteina.value,
+                    pesoKg: parseFloat(prodPeso.value) || null,
+                    porcaoGramas: parseInt(prodPorcao.value) || null,
+                    numPorcoes: parseInt(prodNumPorcoes.value)
+                };
+                
+                if (!data.data || !data.colaborador || !data.proteina || isNaN(data.numPorcoes) || data.numPorcoes <= 0) {
+                     return showNotification("Preencha Data, Colaborador, selecione um Item e Nº de Porções.", true);
                 }
                 
                 try {
-                    await addDoc(itensCol, { nome, categoria });
-                    itemNome.value = '';
-                    itemCategoria.value = '';
-                    itemNome.focus();
+                    if (docId) {
+                        await updateDoc(doc(producaoCol, docId), data);
+                        showNotification('Lançamento atualizado!');
+                    } else {
+                        await addDoc(producaoCol, data);
+                        showNotification('Lançamento salvo!');
+                    }
+                    resetProducaoForm();
                 } catch (error) {
-                    console.error("Erro ao salvar item:", error);
-                    alert("Erro ao salvar item.");
+                    console.error("Erro ao salvar produção:", error);
+                    showNotification("Erro ao salvar produção.", true);
                 }
-                // Renderização será feita pelo onSnapshot
             });
+            
+            // --- Formulário Contagem (Criar/Editar) ---
+            formContagem.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const docId = contEditId.value;
+                const data = {
+                    data: contData.value,
+                    local: capitalizeWords(contLocal.value.trim()) || null, 
+                    proteina: contProteina.value, 
+                    unidade: capitalizeWords(contUnidade.value.trim()), 
+                    quantidade: parseInt(contQuantidade.value)
+                };
+
+                if (!data.data || !data.proteina || !data.unidade || isNaN(data.quantidade) || data.quantidade < 0) {
+                    return showNotification("Preencha Data, selecione um Item, Unidade e Quantidade.", true);
+                }
+                
+                try {
+                    if (docId) {
+                        await updateDoc(doc(contagemCol, docId), data);
+                        showNotification('Contagem atualizada!');
+                    } else {
+                        await addDoc(contagemCol, data);
+                        showNotification('Contagem salva!');
+                    }
+                    resetContagemForm();
+                    contFiltroDataInicio.value = data.data;
+                    contFiltroDataFim.value = data.data;
+                } catch (error) {
+                    console.error("Erro ao salvar contagem:", error);
+                    showNotification("Erro ao salvar contagem.", true);
+                }
+            });
+
+            // --- Formulário Ficha Técnica (Criar/Editar) ---
+            addIngredienteBtn.addEventListener('click', adicionarCampoIngrediente);
+
+            formFicha.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const docId = fichaEditId.value;
+                const data = {
+                    nomePrato: capitalizeWords(fichaNomePrato.value.trim()),
+                    tipoPrato: capitalizeWords(fichaTipoPrato.value.trim()),
+                    colaborador: currentUserName // ATUALIZAÇÃO
+                };
+
+                if (!data.nomePrato || !data.tipoPrato) return;
+                
+                const ingredientes = [];
+                const camposIngredientes = ingredientesContainer.querySelectorAll('.ingrediente-item');
+                if (camposIngredientes.length === 0) return showNotification("Adicione pelo menos um ingrediente.", true);
+                
+                let formValido = true;
+                camposIngredientes.forEach(item => {
+                    const proteina = item.querySelector('.ficha-ingrediente-proteina').value;
+                    const qtdPorcoes = parseInt(item.querySelector('.ficha-ingrediente-qtd').value);
+                    if (!proteina || isNaN(qtdPorcoes) || qtdPorcoes <= 0) formValido = false;
+                    ingredientes.push({ proteina, qtdPorcoes });
+                });
+                
+                if (!formValido) return showNotification("Verifique os ingredientes.", true);
+                
+                const dataPayload = { ...data, ingredientes };
+
+                try {
+                    if (docId) {
+                         if (fichasDB.some(f => f.nomePrato.toLowerCase() === data.nomePrato.toLowerCase() && f.id !== docId)) {
+                            return showNotification("Este nome de prato já existe em outra ficha.", true);
+                         }
+                        await updateDoc(doc(fichasCol, docId), dataPayload);
+                        showNotification('Ficha técnica atualizada!');
+                    } else {
+                         if (fichasDB.some(f => f.nomePrato.toLowerCase() === data.nomePrato.toLowerCase())) {
+                            return showNotification("Este nome de prato já existe.", true);
+                         }
+                        await addDoc(fichasCol, dataPayload);
+                        showNotification('Ficha técnica salva!');
+                    }
+                    resetFichaForm();
+                } catch (error) {
+                    console.error("Erro ao salvar ficha:", error);
+                    showNotification("Erro ao salvar ficha técnica.", true);
+                }
+            });
+            
+            // --- Formulário Registrar Venda (Criar/Editar) ---
+            formVenda.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const docId = vendaEditId.value;
+                const dataBase = {
+                    data: vendaData.value,
+                    nomePrato: vendaPratoSelect.value, 
+                    quantidade: parseInt(vendaQuantidade.value),
+                    colaborador: currentUserName // ATUALIZAÇÃO
+                };
+                
+                if (!dataBase.data || !dataBase.nomePrato || isNaN(dataBase.quantidade) || dataBase.quantidade <= 0) {
+                    return showNotification("Preencha Data, Prato e Quantidade Vendida.", true);
+                }
+                
+                // Lógica 'isSemanal' removida
+                
+                try {
+                    if (docId) {
+                        // Edição
+                        await updateDoc(doc(vendasCol, docId), dataBase);
+                        showNotification('Venda atualizada!');
+                    } else {
+                        // Criação (sempre diária/única)
+                        await addDoc(vendasCol, dataBase);
+                        showNotification('Venda registrada!');
+                    }
+                    resetVendaForm();
+                } catch (error) {
+                    console.error("Erro ao salvar venda:", error);
+                    showNotification("Erro ao salvar venda.", true);
+                }
+            });
+
         });
 
-        // --- Formulário Produção ---
-        formProducao.addEventListener('submit', async (e) => {
-            e.preventDefault(); 
-            const data = prodData.value;
-            const colaborador = prodColaborador.value.trim();
-            const proteina = prodProteina.value;
-            const pesoKg = parseFloat(prodPeso.value) || null;
-            const porcaoGramas = parseInt(prodPorcao.value) || null;
-            const numPorcoes = parseInt(prodNumPorcoes.value); 
-            if (!data || !colaborador || !proteina || isNaN(numPorcoes) || numPorcoes <= 0) {
-                 return alert("Preencha Data, Colaborador, selecione um Item e Nº de Porções.");
+
+        // --- MELHORIA: Funções de Edição e Reset ---
+
+        // --- ABA ITENS ---
+        window.editarItemItem = (docId, nome, categoria) => {
+            if (userRole !== 'Proprietário') return;
+            itemNome.value = nome;
+            itemCategoria.value = categoria;
+            itemEditId.value = docId; 
+            
+            itemSubmitButton.textContent = 'Salvar Alterações';
+            itemSubmitButton.style.backgroundColor = 'var(--button-warning-bg)';
+            cancelEditItemContainer.style.display = 'block';
+            
+            itemNome.focus();
+            document.getElementById('itens').scrollIntoView({ behavior: 'smooth' });
+        }
+        function resetItemForm() {
+            itemNome.value = '';
+            itemCategoria.value = '';
+            itemEditId.value = ''; 
+            
+            itemSubmitButton.textContent = 'Salvar Novo Item';
+            itemSubmitButton.style.backgroundColor = 'var(--button-success-bg)';
+            cancelEditItemContainer.style.display = 'none';
+        }
+
+        // --- ABA PRODUÇÃO ---
+        window.editarItemProducao = (docId, data, colab, prot, peso, porcao, numPorcoes) => {
+            if (userRole !== 'Proprietário') return;
+            prodEditId.value = docId;
+            prodData.value = data;
+            prodColaborador.value = colab;
+            prodProteina.value = prot;
+            prodPeso.value = peso;
+            prodPorcao.value = porcao;
+            prodNumPorcoes.value = numPorcoes;
+            
+            prodSubmitButton.textContent = 'Salvar Alterações';
+            prodSubmitButton.style.backgroundColor = 'var(--button-warning-bg)';
+            cancelEditProdContainer.style.display = 'block';
+            
+            prodColaborador.focus();
+            document.getElementById('producao').scrollIntoView({ behavior: 'smooth' });
+        }
+        function resetProducaoForm() {
+            prodEditId.value = '';
+            prodData.value = new Date().toISOString().split('T')[0];
+            prodColaborador.value = '';
+            prodProteina.value = '';
+            prodPeso.value = '';
+            prodPorcao.value = '';
+            prodNumPorcoes.value = '';
+            
+            prodSubmitButton.textContent = 'Adicionar Lançamento';
+            prodSubmitButton.style.backgroundColor = 'var(--button-success-bg)';
+            cancelEditProdContainer.style.display = 'none';
+        }
+
+        // --- ABA CONTAGEM ---
+         window.editarItemContagem = (docId, data, local, prot, qtd, unidade) => {
+            if (userRole !== 'Proprietário') return;
+            contEditId.value = docId;
+            contData.value = data;
+            contLocal.value = local;
+            contProteina.value = prot;
+            contQuantidade.value = qtd;
+            contUnidade.value = unidade;
+
+            contSubmitButton.textContent = 'Salvar Alterações';
+            contSubmitButton.style.backgroundColor = 'var(--button-warning-bg)';
+            cancelEditContContainer.style.display = 'block';
+            
+            contLocal.focus();
+            document.getElementById('contagem').scrollIntoView({ behavior: 'smooth' });
+        }
+        function resetContagemForm() {
+            contEditId.value = '';
+            contData.value = new Date().toISOString().split('T')[0];
+            contLocal.value = '';
+            contProteina.value = '';
+            contQuantidade.value = '';
+            contUnidade.value = 'Porções';
+            
+            contSubmitButton.textContent = 'Salvar Contagem';
+            contSubmitButton.style.backgroundColor = 'var(--button-success-bg)';
+            cancelEditContContainer.style.display = 'none';
+        }
+
+        // --- ABA VENDAS (FICHA TÉCNICA) ---
+        window.editarItemFicha = (docId) => {
+            if (userRole !== 'Proprietário') return;
+            const ficha = fichasDB.find(f => f.id === docId);
+            if (!ficha) return;
+            
+            fichaEditId.value = docId;
+            fichaNomePrato.value = ficha.nomePrato;
+            fichaTipoPrato.value = ficha.tipoPrato;
+            
+            ingredientesContainer.innerHTML = '';
+            (ficha.ingredientes || []).forEach(ing => {
+                adicionarCampoIngrediente(ing.proteina, ing.qtdPorcoes);
+            });
+            
+            fichaSubmitButton.textContent = 'Salvar Alterações';
+            fichaSubmitButton.style.backgroundColor = 'var(--button-warning-bg)';
+            cancelEditFichaContainer.style.display = 'block';
+            
+            fichaNomePrato.focus();
+            document.getElementById('form-ficha').scrollIntoView({ behavior: 'smooth' });
+        }
+        function resetFichaForm() {
+            fichaEditId.value = '';
+            fichaNomePrato.value = '';
+            fichaTipoPrato.value = '';
+            
+            ingredientesContainer.innerHTML = '';
+            if (itensCarregados) { // Só adiciona se os itens já estiverem no cache
+                adicionarCampoIngrediente(); 
             }
             
-            try {
-                await addDoc(producaoCol, { data, colaborador, proteina, pesoKg, porcaoGramas, numPorcoes });
-                prodColaborador.value = '';
-                prodProteina.value = '';
-                prodPeso.value = '';
-                prodPorcao.value = '';
-                prodNumPorcoes.value = '';
-                prodColaborador.focus(); 
-            } catch (error) {
-                console.error("Erro ao salvar produção:", error);
-                alert("Erro ao salvar produção.");
-            }
-        });
+            fichaSubmitButton.textContent = 'Salvar Ficha Técnica';
+            fichaSubmitButton.style.backgroundColor = 'var(--button-success-bg)';
+            cancelEditFichaContainer.style.display = 'none';
+        }
         
-        // --- Formulário Contagem ---
-        formContagem.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const data = contData.value;
-            const local = contLocal.value.trim() || null;
-            const proteina = contProteina.value;
-            const unidade = contUnidade.value.trim();
-            const quantidade = parseInt(contQuantidade.value);
-            if (!data || !proteina || !unidade || isNaN(quantidade) || quantidade < 0) {
-                return alert("Preencha Data, selecione um Item, Unidade e Quantidade.");
-            }
+        // --- ABA VENDAS (REGISTRO DE VENDA) ---
+        window.editarItemVenda = (docId, data, prato, qtd) => {
+            if (userRole !== 'Proprietário') return;
+            vendaEditId.value = docId;
+            vendaData.value = data;
+            vendaPratoSelect.value = prato;
+            vendaQuantidade.value = qtd;
+            // Lógica semanal removida
             
-            try {
-                await addDoc(contagemCol, { data, local, proteina, unidade, quantidade });
-                contFiltroDataInicio.value = data;
-                contFiltroDataFim.value = data;
-                contLocal.value = '';
-                contProteina.value = '';
-                contQuantidade.value = '';
-                contUnidade.value = 'Porções';
-                contProteina.focus();
-            } catch (error) {
-                console.error("Erro ao salvar contagem:", error);
-                alert("Erro ao salvar contagem.");
-            }
-        });
+            vendaSubmitButton.textContent = 'Salvar Alterações';
+            vendaSubmitButton.style.backgroundColor = 'var(--button-warning-bg)';
+            cancelEditVendaContainer.style.display = 'block';
+            
+            vendaPratoSelect.focus();
+            document.getElementById('form-venda').scrollIntoView({ behavior: 'smooth' });
+        }
+        function resetVendaForm() {
+            vendaEditId.value = '';
+            vendaData.value = new Date().toISOString().split('T')[0];
+            vendaPratoSelect.value = '';
+            vendaQuantidade.value = 1;
+            // Lógica semanal removida
+            
+            vendaSubmitButton.textContent = 'Registrar Venda';
+            vendaSubmitButton.style.backgroundColor = 'var(--button-success-bg)';
+            cancelEditVendaContainer.style.display = 'none';
+        }
 
         // --- Formulário Ficha Técnica ---
         
-        function adicionarCampoIngrediente() {
+        function adicionarCampoIngrediente(proteina = '', qtdPorcoes = 1) {
             const div = document.createElement('div');
             div.className = 'ingrediente-item';
+            
+            const selectHTML = criarSelectProteinasHTML(); 
             div.innerHTML = `
                 <div class="form-group">
                     <label>Item (Cadastrado)</label>
-                    ${criarSelectProteinasHTML()}
+                    ${selectHTML}
                 </div>
                 <div class="form-group">
                     <label>Qtd. Porções</label>
-                    <input type="number" class="ficha-ingrediente-qtd" value="1" min="1" required>
+                    <input type="number" class="ficha-ingrediente-qtd" value="${qtdPorcoes}" min="1" required>
                 </div>
                 <button type="button" onclick="removerCampoIngrediente(this)">X</button>
             `;
+            
             ingredientesContainer.appendChild(div);
-        }
-        
-        window.removerCampoIngrediente = (botao) => {
-            botao.parentElement.remove();
-        }
-
-        addIngredienteBtn.addEventListener('click', adicionarCampoIngrediente);
-
-        formFicha.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const nomePrato = fichaNomePrato.value.trim();
-            const tipoPrato = fichaTipoPrato.value;
-            if (!nomePrato || !tipoPrato) return;
-            
-            const ingredientes = [];
-            const camposIngredientes = ingredientesContainer.querySelectorAll('.ingrediente-item');
-            if (camposIngredientes.length === 0) return alert("Adicione pelo menos um ingrediente.");
-            
-            let formValido = true;
-            camposIngredientes.forEach(item => {
-                const proteina = item.querySelector('.ficha-ingrediente-proteina').value;
-                const qtdPorcoes = parseInt(item.querySelector('.ficha-ingrediente-qtd').value);
-                if (!proteina || isNaN(qtdPorcoes) || qtdPorcoes <= 0) formValido = false;
-                ingredientes.push({ proteina, qtdPorcoes });
-            });
-            
-            if (!formValido) return alert("Verifique os ingredientes.");
-            
-            try {
-                await addDoc(fichasCol, { nomePrato, tipoPrato, ingredientes });
-                fichaNomePrato.value = '';
-                fichaTipoPrato.value = '';
-                ingredientesContainer.innerHTML = '';
-                adicionarCampoIngrediente(); 
-                fichaNomePrato.focus();
-            } catch (error) {
-                console.error("Erro ao salvar ficha:", error);
-                alert("Erro ao salvar ficha técnica.");
-            }
-        });
-        
-        // --- Formulário Registrar Venda ---
-        
-        formVenda.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const data = vendaData.value;
-            const nomePrato = vendaPratoSelect.value;
-            const quantidade = parseInt(vendaQuantidade.value); 
-            if (!data || !nomePrato || isNaN(quantidade) || quantidade <= 0) {
-                return alert("Preencha Data, Prato e Quantidade Vendida.");
-            }
-            
-            try {
-                await addDoc(vendasCol, { data, nomePrato, quantidade });
-                vendaPratoSelect.value = '';
-                vendaQuantidade.value = 1;
-                vendaData.valueAsDate = new Date(); 
-            } catch (error) {
-                console.error("Erro ao salvar venda:", error);
-                alert("Erro ao salvar venda.");
-            }
-        });
-
-        // --- Funções de Excluir (Globais) ---
-        
-        // Modificado para usar ID do Documento
-        window.excluirItemItem = async (docId) => {
-            if (userRole !== 'Proprietário') return; // Segurança
-            const item = itensDB.find(i => i.id === docId);
-            if (!item) return;
-            const itemNome = item.nome;
-            const emUsoProducao = producaoDB.some(p => p.proteina === itemNome);
-            const emUsoContagem = contagemDB.some(c => c.proteina === itemNome);
-            const emUsoFicha = fichasDB.some(f => f.ingredientes.some(i => i.proteina === itemNome));
-            if (emUsoProducao || emUsoContagem || emUsoFicha) {
-                return alert("Não é possível excluir este item, pois ele já está sendo usado.");
-            }
-            try {
-                await deleteDoc(doc(itensCol, docId));
-            } catch (error) {
-                console.error("Erro ao excluir item:", error);
-            }
-        }
-
-        window.excluirItemProducao = async (docId) => {
-            if (userRole !== 'Proprietário') return;
-            try {
-                await deleteDoc(doc(producaoCol, docId));
-            } catch (error) {
-                console.error("Erro ao excluir produção:", error);
+            const novoSelect = div.querySelector('.ficha-ingrediente-proteina');
+            if (novoSelect) {
+                novoSelect.value = proteina;
             }
         }
         
-        window.excluirItemContagem = async (docId) => {
-            if (userRole !== 'Proprietário') return;
-            try {
-                await deleteDoc(doc(contagemCol, docId));
-            } catch (error) {
-                console.error("Erro ao excluir contagem:", error);
-            }
-        }
-
-        window.excluirItemFicha = async (docId) => {
-            if (userRole !== 'Proprietário') return;
-            try {
-                await deleteDoc(doc(fichasCol, docId));
-            } catch (error) {
-                console.error("Erro ao excluir ficha:", error);
-            }
-        }
-        
-        window.excluirItemVenda = async (docId) => {
-            if (userRole !== 'Proprietário') return;
-            try {
-                await deleteDoc(doc(vendasCol, docId));
-            } catch (error) {
-                console.error("Erro ao excluir venda:", error);
-            }
-        }
-
-        // --- TROCA DE ABAS (Navegação) ---
-        
-        window.showTab = (tabId, clickedButton) => {
-            let allContent = document.querySelectorAll('.tab-content');
-            allContent.forEach(content => content.classList.remove('active'));
-            let allButtons = document.querySelectorAll('.tab-button');
-            allButtons.forEach(button => button.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            
-            // Verifica se o botão clicado não está nulo (ex: no setup inicial da UI)
-            if (clickedButton) {
-                clickedButton.classList.add('active');
-            }
-            
-            if (tabId === 'vendas' && ingredientesContainer.children.length === 0) {
-                adicionarCampoIngrediente(); 
-            }
-            if (tabId === 'relatorio') {
-                calcularRelatorioBalanço(filtroDataInicio.value, filtroDataFim.value);
-            }
-            // Outras renderizações são feitas pelos listeners (onSnapshot)
-        }
         
         // --- RELATÓRIO (Lógica local, usa dados do cache) ---
         
+        // ATUALIZAÇÃO: Nova função auxiliar para somar contagens
+        function somarContagens(listaContagens, dataAlvo, itemNome) {
+            let total = 0;
+            const contagensDoDia = listaContagens
+                .filter(i => i.data === dataAlvo && 
+                             i.proteina === itemNome &&
+                             (i.unidade.toLowerCase() === 'porções' || i.unidade.toLowerCase() === 'porcoes'));
+            
+            contagensDoDia.forEach(contagem => {
+                total += contagem.quantidade;
+            });
+            return total;
+        }
+
         function calcularRelatorioBalanço(dataInicio, dataFim) {
             dataInicio = dataInicio || "1970-01-01";
             dataFim = dataFim || "2099-12-31";
@@ -1293,19 +2227,23 @@
                 relatorio[item] = { inicial: 0, produzido: 0, vendido: 0, teorico: 0, fisico: null };
             });
 
-            // 3. Busca Estoque INICIAL (usa cache local 'contagemDB')
-            const contagensIniciais = contagemDB
+            // 1. Estoque INICIAL (Contagem ANTES do início)
+            // Encontra a data da última contagem ANTES do período
+            const datasContagensIniciais = contagemDB
                 .filter(i => i.data < dataInicio && (i.unidade.toLowerCase() === 'porções' || i.unidade.toLowerCase() === 'porcoes'))
-                .sort((a, b) => b.data.localeCompare(a.data)); 
-            const contagensIniciaisFeitas = new Set();
-            contagensIniciais.forEach(contagem => {
-                if (relatorio[contagem.proteina] && !contagensIniciaisFeitas.has(contagem.proteina)) {
-                    relatorio[contagem.proteina].inicial = contagem.quantidade;
-                    contagensIniciaisFeitas.add(contagem.proteina);
-                }
-            });
+                .map(i => i.data)
+                .sort((a, b) => b.localeCompare(a)); // Ordena Z-A (mais recente primeiro)
+            
+            if (datasContagensIniciais.length > 0) {
+                const ultimaDataInicial = datasContagensIniciais[0];
+                console.log("Última data de contagem inicial:", ultimaDataInicial);
+                // Soma todas as contagens dessa data para cada item
+                todosOsItens.forEach(itemNome => {
+                    relatorio[itemNome].inicial = somarContagens(contagemDB, ultimaDataInicial, itemNome);
+                });
+            }
 
-            // 4. Calcula Produzido (usa cache local 'producaoDB')
+            // 2. Produzido (Entradas DENTRO do período)
             producaoDB
                 .filter(i => i.data >= dataInicio && i.data <= dataFim)
                 .forEach(prod => {
@@ -1314,13 +2252,13 @@
                     }
                 });
 
-            // 5. Calcula Vendido (usa caches locais 'vendasDB' e 'fichasDB')
+            // 3. Vendido (Saídas DENTRO do período)
             vendasDB
                 .filter(i => i.data >= dataInicio && i.data <= dataFim)
                 .forEach(venda => {
                     const ficha = fichasDB.find(f => f.nomePrato === venda.nomePrato);
                     if (ficha) {
-                        ficha.ingredientes.forEach(ing => {
+                        (ficha.ingredientes || []).forEach(ing => {
                             if (relatorio[ing.proteina]) {
                                 relatorio[ing.proteina].vendido += (ing.qtdPorcoes * venda.quantidade);
                             }
@@ -1328,43 +2266,54 @@
                     }
                 });
                 
-            // 6. Busca Estoque FINAL (usa cache local 'contagemDB')
-            const contagensFinais = contagemDB
+            // 4. Estoque FINAL (Contagem DENTRO do período)
+            // Encontra a data da última contagem DENTRO do período
+            const datasContagensFinais = contagemDB
                 .filter(i => i.data >= dataInicio && i.data <= dataFim && (i.unidade.toLowerCase() === 'porções' || i.unidade.toLowerCase() === 'porcoes'))
-                .sort((a, b) => b.data.localeCompare(a.data)); 
-            const contagensFinaisFeitas = new Set();
-            contagensFinais.forEach(contagem => {
-                if (relatorio[contagem.proteina] && !contagensFinaisFeitas.has(contagem.proteina)) {
-                    relatorio[contagem.proteina].fisico = contagem.quantidade;
-                    contagensFinaisFeitas.add(contagem.proteina);
-                }
-            });
+                .map(i => i.data)
+                .sort((a, b) => b.localeCompare(a)); // Ordena Z-A (mais recente primeiro)
 
-            // 7. Renderiza a tabela
+            if (datasContagensFinais.length > 0) {
+                const ultimaDataFinal = datasContagensFinais[0];
+                console.log("Última data de contagem final:", ultimaDataFinal);
+                // Soma todas as contagens dessa data para cada item
+                todosOsItens.forEach(itemNome => {
+                    const totalFisico = somarContagens(contagemDB, ultimaDataFinal, itemNome);
+                    // Só define o físico se houver de fato uma contagem para esse item
+                    if (contagemDB.some(c => c.data === ultimaDataFinal && c.proteina === itemNome)) {
+                         relatorio[itemNome].fisico = totalFisico;
+                    }
+                });
+            }
+
+            // 5. Renderiza a tabela
             listaRelatorio.innerHTML = '';
             const itensOrdenados = Object.keys(relatorio).sort();
             
             for (const item of itensOrdenados) {
                 const dados = relatorio[item];
+                // Só mostra se houve movimento ou contagem
                 if (dados.inicial === 0 && dados.produzido === 0 && dados.vendido === 0 && dados.fisico === null) continue;
+                
                 dados.teorico = dados.inicial + dados.produzido - dados.vendido;
                 let diferenca = null;
                 let statusHtml = '<em>Sem contagem final</em>';
-                let trStyle = '';
+                let trClass = ''; // ATUALIZAÇÃO: Usa classe
+
                 if (dados.fisico !== null) {
                     diferenca = dados.fisico - dados.teorico;
                     if (diferenca > 0) {
-                        statusHtml = `<strong style="color: #27ae60;">Sobra: ${diferenca}</strong>`;
-                        trStyle = 'background-color: #f0fef4;';
+                        statusHtml = `<strong class="status-sobra">Sobra: ${diferenca}</strong>`;
+                        trClass = 'row-sobra';
                     } else if (diferenca < 0) {
-                        statusHtml = `<strong style="color: #e74c3c;">Falta: ${Math.abs(diferenca)}</strong>`;
-                        trStyle = 'background-color: #fff0f0;';
+                        statusHtml = `<strong class="status-falta">Falta: ${Math.abs(diferenca)}</strong>`;
+                        trClass = 'row-falta';
                     } else {
-                        statusHtml = `<strong>Zerado: 0</strong>`;
+                        statusHtml = `<strong class="status-zerado">Zerado: 0</strong>`;
                     }
                 }
                 const tr = document.createElement('tr');
-                tr.style = trStyle;
+                tr.className = trClass; // ATUALIZAÇÃO: Define a classe
                 tr.innerHTML = `
                     <td><strong>${item}</strong></td>
                     <td>${dados.inicial}</td>
@@ -1387,8 +2336,8 @@
         
         function formatarData(dataISO) {
             if (!dataISO || !dataISO.includes('-')) return 'Data Inválida';
-            const [ano, mes, dia] = dataISO.split('-');
-            const dataObj = new Date(ano, mes - 1, dia);
+            const [ano, mes, dia] = dataISO.split('-').map(Number);
+            const dataObj = new Date(Date.UTC(ano, mes - 1, dia)); 
             return dataObj.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
         }
 
@@ -1436,24 +2385,24 @@
                         formatarData(item.data), item.local || '', item.proteina,
                         categoria, item.quantidade, item.unidade
                     ].join(';') + '\n';
-            });
+                });
             downloadCSV(csv, `contagem_${dataInicio}_a_${dataFim}.csv`);
         }
 
         function exportarFichas() {
-            let csv = "Nome Prato;Tipo Prato;Item (Ingrediente);Qtd. Porcoes\n";
+            let csv = "Colaborador;Nome Prato;Tipo Prato;Item (Ingrediente);Qtd. Porcoes\n";
             fichasDB.forEach(ficha => {
-                ficha.ingredientes.forEach(ing => {
-                    csv += [ficha.nomePrato, ficha.tipoPrato, ing.proteina, ing.qtdPorcoes].join(';') + '\n';
+                (ficha.ingredientes || []).forEach(ing => {
+                    csv += [ficha.colaborador || '', ficha.nomePrato, ficha.tipoPrato, ing.proteina, ing.qtdPorcoes].join(';') + '\n';
                 });
             });
             downloadCSV(csv, 'fichas_tecnicas.csv');
         }
 
         function exportarVendas() {
-            let csv = "Data;Prato Vendido;Quantidade (Pratos)\n";
+            let csv = "Data;Colaboraor;Prato Vendido;Quantidade (Pratos)\n";
             vendasDB.forEach(venda => {
-                csv += [formatarData(venda.data), venda.nomePrato, venda.quantidade].join(';') + '\n';
+                csv += [formatarData(venda.data), venda.colaborador || '', venda.nomePrato, venda.quantidade].join(';') + '\n';
             });
             downloadCSV(csv, 'vendas.csv');
         }
@@ -1522,10 +2471,10 @@
             try {
                 const successful = document.execCommand('copy');
                 if (successful) feedbackBotaoCopiado();
-                else alert("Não foi possível copiar. Tente manualmente.");
+                else showNotification("Não foi possível copiar. Tente manualmente.", true);
             } catch (err) {
                 console.error("Erro ao copiar (fallback):", err);
-                alert("Não foi possível copiar. Tente manually.");
+                showNotification("Não foi possível copiar. Tente manualmente.", true);
             }
             document.body.removeChild(textArea);
         }
@@ -1544,334 +2493,5 @@
 
     </script>
 
-    <!-- HTML da Página -->
-    
-    <!-- NOVO: Tela de Login (Visível por padrão) -->
-    <div id="login-container" class="auth-container">
-        <form id="login-form" class="auth-form">
-            <h2>Controle de Produção Numar</h2>
-            <div class="form-group">
-                <label for="login-name">Nome (Login)</label>
-                <input type="text" id="login-name" required autocomplete="username">
-            </div>
-            <div class="form-group">
-                <label for="login-password">Senha</label>
-                <input type="password" id="login-password" required autocomplete="current-password">
-            </div>
-            <button type="submit">Entrar</button>
-            <p id="login-error" class="auth-error"></p>
-            <p id="show-register-link" class="auth-link">Não tem conta? Crie uma aqui.</p>
-        </form>
-    </div>
-    
-    <!-- NOVO: Tela de Registo (Oculta por padrão) -->
-    <div id="register-container" class="auth-container">
-        <form id="register-form" class="auth-form">
-            <h2>Criar Nova Conta</h2>
-            <div class="form-group">
-                <label for="register-nome-completo">Seu Nome Completo</label>
-                <input type="text" id="register-nome-completo" required>
-            </div>
-            <div class="form-group">
-                <label for="register-nome-login">Nome de Login (Ex: vitor)</label>
-                <input type="text" id="register-nome-login" required>
-            </div>
-            <div class="form-group">
-                <label for="register-password">Senha (mín. 6 caracteres)</label>
-                <input type="password" id="register-password" required>
-            </div>
-            <div class="form-group">
-                <label for="register-funcao">Sua Função</label>
-                <select id="register-funcao" required>
-                    <option value="">Selecione...</option>
-                    <option value="Produção">Produção</option>
-                    <option value="Compras">Compras</option>
-                    <!-- "Proprietário" é omitido por segurança -->
-                </select>
-            </div>
-            <button type="submit">Registar</button>
-            <p id="register-error" class="auth-error"></p>
-            <p id="show-login-link" class="auth-link">Já tem conta? Entre aqui.</p>
-        </form>
-    </div>
-    
-    <!-- NOVO: App (Oculto por padrão) -->
-    <div id="app-container">
-        <header>
-            <h1>Controle de Produção Numar</h1>
-            <!-- NOVO: Info do Usuário e Logout -->
-            <div class="header-info">
-                <span id="user-name-display"></span>
-                <button id="logout-button">Sair</button>
-            </div>
-        </header>
-
-        <nav class="tab-nav">
-            <button class="tab-button" onclick="showTab('itens', this)">Itens</button>
-            <button class="tab-button" onclick="showTab('producao', this)">Produção</button>
-            <button class="tab-button" onclick="showTab('contagem', this)">Contagem</button>
-            <button class="tab-button" onclick="showTab('vendas', this)">Vendas</button>
-            <button class="tab-button" onclick="showTab('relatorio', this)">Relatório</button>
-        </nav>
-
-        <main>
-            <!-- Aba Itens -->
-            <div id="itens" class="tab-content">
-                <h2>Cadastro de Itens e Categorias</h2>
-                <p>Cadastre aqui todos os seus itens. Isso garantirá a padronização em todo o sistema.</p>
-                <form id="form-itens" class="form-container">
-                    <div class="form-group">
-                        <label for="item-nome">Nome do Item (Ex: Pescada 200g)</label>
-                        <input type="text" id="item-nome" placeholder="Nome único do item" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="item-categoria">Categoria</label>
-                        <input type="text" id="item-categoria" list="lista-categorias" placeholder="Ex: Proteínas" required>
-                        <datalist id="lista-categorias">
-                            <option value="Proteínas"></option>
-                            <option value="Acompanhamentos"></option>
-                            <option value="Bebidas"></option>
-                            <option value="Descartáveis"></option>
-                            <option value="Hortifruti"></option>
-                        </datalist>
-                    </div>
-                    <div class="form-group">
-                        <button type="submit" class="submit-button">Salvar Novo Item</button>
-                    </div>
-                </form>
-                <hr>
-                <h3>
-                    Itens Cadastrados
-                    <button id="export-itens" class="secondary-button export-button">Exportar (CSV)</button>
-                </h3>
-                <div class="table-container">
-                    <table>
-                        <thead><tr><th>Nome do Item</th><th>Categoria</th><th>Ação</th></tr></thead>
-                        <tbody id="lista-itens"></tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Aba Produção -->
-            <div id="producao" class="tab-content">
-                <h2>Novo Lançamento (Produção)</h2>
-                <p>Registre o que foi produzido (a proteína pronta).</p>
-                <form id="form-producao" class="form-container form-container-prod">
-                    <div class="form-group">
-                        <label for="prod-data">Data</label>
-                        <input type="date" id="prod-data" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="prod-colaborador">Colaborador</label>
-                        <input type="text" id="prod-colaborador" placeholder="Nome" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="prod-proteina">Nome da Proteína/Item</label>
-                        <select id="prod-proteina" required>
-                            <option value="">Selecione um item</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="prod-peso">Peso Total (kg) (Opcional)</label>
-                        <input type="number" id="prod-peso" step="0.001" placeholder="Ex: 10.5">
-                    </div>
-                    <div class="form-group">
-                        <label for="prod-porcao">Porção (g) (Opcional)</label>
-                        <input type="number" id="prod-porcao" placeholder="Ex: 200">
-                    </div>
-                    <div class="form-group">
-                        <label for="prod-num-porcoes">Nº de Porções (Obrigatório)</label>
-                        <input type="number" id="prod-num-porcoes" placeholder="Ex: 50" required>
-                    </div>
-                    <div class="form-group">
-                        <button type="submit" class="submit-button">Adicionar Lançamento</button>
-                    </div>
-                </form>
-                <hr>
-                <h3>
-                    Lançamentos de Produção
-                    <button id="export-producao" class="secondary-button export-button">Exportar (CSV)</button>
-                </h3>
-                <div class="table-container">
-                    <table>
-                        <thead><tr><th>Data</th><th>Colaborador</th><th>Item</th><th>Peso (kg)</th><th>Porção (g)</th><th>Nº Porções</th><th>Ação</th></tr></thead>
-                        <tbody id="lista-producao"></tbody>
-                    </table>
-                </div>
-                <hr>
-                <h3>Resumo da Produção (Total)</h3>
-                <div class="table-container">
-                    <table class="resumo-table">
-                        <thead><tr><th>Proteína</th><th>Total de Porções Produzidas</th></tr></thead>
-                        <tbody id="resumo-producao"></tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Aba Contagem -->
-            <div id="contagem" class="tab-content">
-                <h2>Nova Contagem (Estoque Físico)</h2>
-                <p>Registre o estoque físico (o que você encontrou na geladeira).</p>
-                <form id="form-contagem" class="form-container form-container-contagem">
-                    <div class="form-group">
-                        <label for="cont-data">Data da Contagem</label>
-                        <input type="date" id="cont-data" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="cont-local">Local (Opcional)</label>
-                        <input type="text" id="cont-local" placeholder="Ex: Geladeira 1">
-                    </div>
-                    <div class="form-group">
-                        <label for="cont-proteina">Nome do Item</label>
-                        <select id="cont-proteina" required>
-                            <option value="">Selecione um item</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="cont-unidade">Unidade</label>
-                        <input type="text" id="cont-unidade" list="lista-unidades" value="Porções" required>
-                        <datalist id="lista-unidades">
-                            <option value="Porções"></option><option value="Peças"></option><option value="Kg"></option><option value="Unidades"></option><option value="Pacotes"></option>
-                        </datalist>
-                    </div>
-                    <div class="form-group">
-                        <label for="cont-quantidade">Quantidade Contada</label>
-                        <input type="number" id="cont-quantidade" min="0" placeholder="Ex: 50" required>
-                    </div>
-                    <div class="form-group">
-                        <button type="submit" class="submit-button">Salvar Contagem</button>
-                    </div>
-                </form>
-                <hr>
-                <div class="filtro-container">
-                    <div class="form-group">
-                        <label for="cont-filtro-data-inicio">De:</label>
-                        <input type="date" id="cont-filtro-data-inicio">
-                    </div>
-                    <div class="form-group">
-                        <label for="cont-filtro-data-fim">Até:</label>
-                        <input type="date" id="cont-filtro-data-fim">
-                    </div>
-                    <div class="form-group">
-                        <button id="cont-filtro-btn" class="secondary-button" style="width: 100%; padding: 12px;">Filtrar Tabela</button>
-                    </div>
-                </div>
-                <h3>
-                    Contagens Salvas (Filtrado)
-                    <div class="table-header-buttons">
-                        <button id="copiar-contagem-btn" class="secondary-button copy-button">Copiar Contagem</button>
-                        <button id="export-contagem" class="secondary-button export-button">Exportar (CSV)</button>
-                    </div>
-                </h3>
-                <div class="table-container">
-                    <table>
-                        <thead><tr><th>Data</th><th>Local</th><th>Item</th><th>Categoria</th><th>Quantidade</th><th>Unidade</th><th>Ação</th></tr></thead>
-                        <tbody id="lista-contagem"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Aba Vendas -->
-            <div id="vendas" class="tab-content">
-                <h2>Vendas</h2>
-                <h3>Registrar Prato (Ficha Técnica)</h3>
-                <p>Crie a "Ficha Técnica" de um prato. Use os itens cadastrados na Produção.</p>
-                <form id="form-ficha">
-                    <div class="form-container" style="margin-bottom: 15px;">
-                        <div class="form-group">
-                            <label for="ficha-nome-prato">Nome do Prato</label>
-                            <input type="text" id="ficha-nome-prato" placeholder="Ex: X-Tudo" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="ficha-tipo-prato">Tipo de Prato</label>
-                            <select id="ficha-tipo-prato" required>
-                                <option value="">Selecione o tipo</option><option value="Executivo">Executivo</option><option value="Compartilhado">Compartilhado</option><option value="Evento">Evento</option><option value="Outro">Outro</option>
-                            </select>
-                        </div>
-                    </div>
-                    <h4>Ingredientes (Itens da Produção)</h4>
-                    <div id="ingredientes-container"></div>
-                    <div class="form-group">
-                        <button type="button" id="add-ingrediente-btn" class="secondary-button">+ Adicionar Item</button>
-                    </div>
-                    <div class="form-group">
-                        <button type="submit" class="submit-button">Salvar Ficha Técnica</button>
-                    </div>
-                </form>
-                <hr>
-                <h3>
-                    Fichas Técnicas Salvas
-                    <button id="export-fichas" class="secondary-button export-button">Exportar (CSV)</button>
-                </h3>
-                <div class="table-container">
-                    <table>
-                        <thead><tr><th>Nome do Prato</th><th>Tipo</th><th>Ingredientes (Item | Qtd. Porções)</th><th>Ação</th></tr></thead>
-                        <tbody id="lista-fichas"></tbody>
-                    </table>
-                </div>
-                <hr>
-                <h3>Registrar Venda</h3>
-                <p>Registre a venda de um prato já cadastrado na Ficha Técnica.</p>
-                <form id="form-venda" class="form-container">
-                    <div class="form-group">
-                        <label for="venda-data">Data da Venda</label>
-                        <input type="date" id="venda-data" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="venda-prato">Selecione o Prato</label>
-                        <select id="venda-prato" required><option value="">Carregando pratos...</option></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="venda-quantidade">Quantidade Vendida (Nº Pratos)</label>
-                        <input type="number" id="venda-quantidade" min="1" value="1" required>
-                    </div>
-                    <div class="form-group">
-                        <button type="submit" class="submit-button">Registrar Venda</button>
-                    </div>
-                </form>
-                <hr>
-                <h3>
-                    Vendas Registradas
-                    <button id="export-vendas" class="secondary-button export-button">Exportar (CSV)</button>
-                </h3>
-                <div class="table-container">
-                    <table>
-                        <thead><tr><th>Data</th><th>Prato Vendido</th><th>Quantidade</th><th>Ação</th></tr></thead>
-                        <tbody id="lista-vendas"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Aba Relatório -->
-            <div id="relatorio" class="tab-content">
-                <h2>
-                    Relatório (Balanço de Estoque)
-                    <button id="export-relatorio" class="secondary-button export-button">Exportar (CSV)</button>
-                </h2>
-                <p>Comparativo do estoque físico (Contado) vs. estoque teórico (Sistema). Apenas contagens em "Porções" são usadas no balanço.</p>
-                <div class="filtro-container">
-                    <div class="form-group">
-                        <label for="filtro-data-inicio">Data Inicial</label>
-                        <input type="date" id="filtro-data-inicio">
-                    </div>
-                    <div class="form-group">
-                        <label for="filtro-data-fim">Data Final</label>
-                        <input type="date" id="filtro-data-fim">
-                    </div>
-                    <div class="form-group">
-                        <button id="filtro-relatorio-btn" class="secondary-button" style="width: 100%; padding: 12px;">Gerar Relatório</button>
-                    </div>
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead><tr><th>Item</th><th>Est. Inicial (Contado)</th><th>Produzido (Entrada)</th><th>Vendido (Saída)</th><th>Est. Teórico (Final)</th><th>Est. Físico (Final)</th><th>Diferença (Sobra / Falta)</th></tr></thead>
-                        <tbody id="lista-relatorio"></tbody>
-                    </table>
-                </div>
-            </div>
-        </main>
-    </div>
-    
 </body>
 </html>
-
